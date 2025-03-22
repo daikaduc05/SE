@@ -1,0 +1,29 @@
+# Build
+bin/
+obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# ASP.NET Secrets
+secrets.json
+
+# Others
+*.db
+*.sqlite
+*.mdf
+
+# NuGet
+project.lock.json
+project.assets.json
+project.nuget.cache
+*.nupkg
