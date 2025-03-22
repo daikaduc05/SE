@@ -11,11 +11,11 @@ namespace TaskManagerBE.Models
         [ForeignKey("User")]
         public int User_Id { get; set; }
 
-        [ForeignKey("Task")]
+        [ForeignKey("Tasks")]
         public int Task_Id { get; set; }
 
         // Navigation properties
         public virtual User User { get; set; } = null!;
-        public virtual Task Task { get; set; } = null!;
+        public virtual Tasks Task { get; set; } = null!;
     }
 }
