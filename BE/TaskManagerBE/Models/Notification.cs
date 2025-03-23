@@ -11,7 +11,7 @@ namespace TaskManagerBE.Models
         public int Id { get; set; }
 
         [ForeignKey("Project")]
-        public int Project_Id { get; set; }
+        public int ProjectId { get; set; }
 
         [Required]
         public string Title { get; set; } = string.Empty;
@@ -19,13 +19,15 @@ namespace TaskManagerBE.Models
         public string Context { get; set; } = string.Empty;
 
         [Required]
-        public string Created_By { get; set; } = string.Empty;
+        [ForeignKey("User")]
+        public int CreatedById { get; set; }
 
         [Required]
-        public DateTime Created_At { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         // Navigation properties
-        public virtual Project Project { get; set; } = null!;
-        public virtual ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
+        public Project Project { get; set; } = null!;
+        public User CreatedBy { get; set; } = null!;
+        public ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
     }
 }

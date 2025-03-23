@@ -9,17 +9,17 @@ namespace TaskManagerBE.Models
         public int Id { get; set; }
 
         [ForeignKey("User")]
-        public int User_Id { get; set; }
+        public int UserId { get; set; }
 
         [ForeignKey("Role")]
-        public int Role_Id { get; set; }
+        public int RoleId { get; set; }
 
         [ForeignKey("Project")]
-        public int Project_Id { get; set; }
+        public int ProjectId { get; set; }
 
         // Navigation properties
-        public virtual User User { get; set; } = null!;
-        public virtual Role Role { get; set; } = null!;
-        public virtual Project Project { get; set; } = null!;
+        public User User { get; set; } = null!;
+        public Role Role { get; set; } = null!;
+        public Project Project { get; set; } = null!;
     }
 }

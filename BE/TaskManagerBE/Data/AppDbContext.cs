@@ -13,6 +13,9 @@ namespace TaskManagerBE.Data
         public DbSet<TaskUser> TaskUsers { get; set; } = null!;
         public DbSet<RoleUserProject> RoleUserProjects { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
+        public DbSet<UserNotification> UserNotifications { get; set; } = null!;
+        public DbSet<Role> Roles { get; set; } = null!;
+        
 
     }
 }

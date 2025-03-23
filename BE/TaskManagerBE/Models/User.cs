@@ -6,7 +6,7 @@ namespace TaskManagerBE.Models
     public class User
     {
         [Key]
-        public int Id { get; set; }
+        public int Id { get; set; } 
 
         [Required]
         public string Username { get; set; } = string.Empty;
@@ -18,13 +18,13 @@ namespace TaskManagerBE.Models
         [Required]
         public string Password { get; set; } = string.Empty;
 
-        public bool Noti_Settings { get; set; }
+        public bool NotificationSettings { get; set; }
 
-        public bool Is_Banned { get; set; }
+        public bool IsBanned { get; set; }
 
         // Navigation properties
-        public virtual ICollection<RoleUserProject> RoleUserProjects { get; set; } = new List<RoleUserProject>();
-        public virtual ICollection<TaskUser> TaskUsers { get; set; } = new List<TaskUser>();
-        public virtual ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
+        public ICollection<RoleUserProject> RoleUserProjects { get; set; } = new List<RoleUserProject>();
+        public ICollection<TaskUser> TaskUsers { get; set; } = new List<TaskUser>();
+        public ICollection<UserNotification> UserNotifications { get; set; } = new List<UserNotification>();
     }
 }

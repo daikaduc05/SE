@@ -12,6 +12,6 @@ namespace TaskManagerBE.Models
         public string Name { get; set; } = "Member";
 
         // Navigation properties
-        public virtual ICollection<RoleUserProject> RoleUserProjects { get; set; } = new List<RoleUserProject>();
+        public ICollection<RoleUserProject> RoleUserProjects { get; set; } = new List<RoleUserProject>();
     }
 }

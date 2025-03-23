@@ -9,15 +9,15 @@ namespace TaskManagerBE.Models
         public int Id { get; set; }
 
         [ForeignKey("User")]
-        public int User_Id { get; set; }
+        public int UserId { get; set; }
 
         [ForeignKey("Notification")]
-        public int Noti_Id { get; set; }
+        public int NotificationId { get; set; }
 
-        public bool Is_Read { get; set; } = false;
+        public bool IsRead { get; set; } = false;
 
         // Navigation properties
-        public virtual User User { get; set; } = null!;
-        public virtual Notification Notification { get; set; } = null!;
+        public User User { get; set; } = null!;
+        public Notification Notification { get; set; } = null!;
     }
 }

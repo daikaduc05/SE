@@ -27,3 +27,8 @@ project.lock.json
 project.assets.json
 project.nuget.cache
 *.nupkg
+
+# Environment variables
+.env
+*.env
+.env.local

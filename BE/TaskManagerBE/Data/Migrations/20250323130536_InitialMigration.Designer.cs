@@ -2,17 +2,20 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TaskManagerBE.Data;
 
 #nullable disable
 
-namespace TaskManagerBE.Migrations
+namespace TaskManagerBE.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323130536_InitialMigration")]
+    partial class InitialMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,14 +32,13 @@ namespace TaskManagerBE.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("Created_At")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Created_By")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
 
-                    b.Property<int>("Project_Id")
+                    b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
@@ -45,7 +47,9 @@ namespace TaskManagerBE.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Project_Id");
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("Notifications");
                 });
@@ -77,7 +81,7 @@ namespace TaskManagerBE.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Role");
+                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("TaskManagerBE.Models.RoleUserProject", b =>
@@ -86,22 +90,22 @@ namespace TaskManagerBE.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("Project_Id")
+                    b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Role_Id")
+                    b.Property<int>("RoleId")
                         .HasColumnType("int");
 
-                    b.Property<int>("User_Id")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Project_Id");
+                    b.HasIndex("ProjectId");
 
-                    b.HasIndex("Role_Id");
+                    b.HasIndex("RoleId");
 
-                    b.HasIndex("User_Id");
+                    b.HasIndex("UserId");
 
                     b.ToTable("RoleUserProjects");
                 });
@@ -115,17 +119,14 @@ namespace TaskManagerBE.Migrations
                     b.Property<int>("TaskId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Task_Id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("User_Id")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("TaskId");
 
-                    b.HasIndex("User_Id");
+                    b.HasIndex("UserId");
 
                     b.ToTable("TaskUsers");
                 });
@@ -136,9 +137,8 @@ namespace TaskManagerBE.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Created_By")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
 
                     b.Property<string>("Priority")
                         .IsRequired()
@@ -147,18 +147,17 @@ namespace TaskManagerBE.Migrations
                     b.Property<int>("ProjectId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Project_Id")
-                        .HasColumnType("int");
-
                     b.Property<string>("State")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Task_Name")
+                    b.Property<string>("TaskName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
 
                     b.HasIndex("ProjectId");
 
@@ -175,10 +174,10 @@ namespace TaskManagerBE.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<bool>("Is_Banned")
+                    b.Property<bool>("IsBanned")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<bool>("Noti_Settings")
+                    b.Property<bool>("NotificationSettings")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Password")
@@ -200,31 +199,39 @@ namespace TaskManagerBE.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<bool>("Is_Read")
+                    b.Property<bool>("IsRead")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<int>("Noti_Id")
+                    b.Property<int>("NotificationId")
                         .HasColumnType("int");
 
-                    b.Property<int>("User_Id")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Noti_Id");
+                    b.HasIndex("NotificationId");
 
-                    b.HasIndex("User_Id");
+                    b.HasIndex("UserId");
 
-                    b.ToTable("UserNotification");
+                    b.ToTable("UserNotifications");
                 });
 
             modelBuilder.Entity("TaskManagerBE.Models.Notification", b =>
                 {
-                    b.HasOne("TaskManagerBE.Models.Project", "Project")
-                        .WithMany("Notifications")
-                        .HasForeignKey("Project_Id")
+                    b.HasOne("TaskManagerBE.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("TaskManagerBE.Models.Project", "Project")
+                        .WithMany("Notifications")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedBy");
 
                     b.Navigation("Project");
                 });
@@ -233,19 +240,19 @@ namespace TaskManagerBE.Migrations
                 {
                     b.HasOne("TaskManagerBE.Models.Project", "Project")
                         .WithMany("RoleUserProjects")
-                        .HasForeignKey("Project_Id")
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TaskManagerBE.Models.Role", "Role")
                         .WithMany("RoleUserProjects")
-                        .HasForeignKey("Role_Id")
+                        .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TaskManagerBE.Models.User", "User")
                         .WithMany("RoleUserProjects")
-                        .HasForeignKey("User_Id")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -266,7 +273,7 @@ namespace TaskManagerBE.Migrations
 
                     b.HasOne("TaskManagerBE.Models.User", "User")
                         .WithMany("TaskUsers")
-                        .HasForeignKey("User_Id")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -277,11 +284,19 @@ namespace TaskManagerBE.Migrations
 
             modelBuilder.Entity("TaskManagerBE.Models.Tasks", b =>
                 {
+                    b.HasOne("TaskManagerBE.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("TaskManagerBE.Models.Project", "Project")
                         .WithMany("Tasks")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("CreatedBy");
 
                     b.Navigation("Project");
                 });
@@ -290,13 +305,13 @@ namespace TaskManagerBE.Migrations
                 {
                     b.HasOne("TaskManagerBE.Models.Notification", "Notification")
                         .WithMany("UserNotifications")
-                        .HasForeignKey("Noti_Id")
+                        .HasForeignKey("NotificationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("TaskManagerBE.Models.User", "User")
                         .WithMany("UserNotifications")
-                        .HasForeignKey("User_Id")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

@@ -1,9 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using TaskManagerBE.Data;
 using Microsoft.OpenApi.Models;
+using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load .env file
+Env.Load();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
