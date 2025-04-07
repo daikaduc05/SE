@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { Project } from './project.entity';
 import { TaskUser } from './task-user.entity';
+import { User } from 'src/users/entities/users.entity';
 
 @Entity('tasks')
 export class Task {
@@ -31,12 +32,12 @@ export class Task {
   @Column({ name: 'done_at' })
   doneAt: Date;
 
-  @Column({ name: 'created_by' })
-  createdBy: string;
-
   @ManyToOne(() => Project, (project) => project.tasks)
   project: Project;
 
   @OneToMany(() => TaskUser, (taskUser) => taskUser.task)
   taskUsers: TaskUser[];
+
+  @ManyToOne(() => User, (user) => user.taskCreated)
+  createdBy: User;
 }
