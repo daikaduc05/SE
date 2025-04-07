@@ -25,12 +25,12 @@ const InputLabel = ({
     <View className="w-full px-10 flex flex-col gap-3">
       <Text className="text-black font-bold text-[14px]">{title}</Text>
       <View className="relative flex flex-col gap-1">
-        <View className="relative flex flex-row items-center justify-between">
+        <View className="relative flex flex-row items-center gap-2 justify-between">
           <TextInput
-            className={`border ${message ? 'border-red-500' : 'border-slate-800'} focus:border-black py-3 rounded-2xl px-5 ${showPasswordToggle ? 'pr-12' : ''}`}
+            className={`border border-opacity-40 px-2 w-full ${message ? 'border-red-500' : 'border-slate-400'} py-3 rounded-2xl ${showPasswordToggle ? 'pr-12' : ''}`}
             placeholder={placeholder}
             secureTextEntry={secureTextEntry}
-            onChangeText={onChangeText}
+            onChangeText={onChangeText} 
           />
           {showPasswordToggle && onPasswordVisibilityToggle && (
             <PasswordVisibilityToggle

@@ -58,9 +58,9 @@ const Dashboard = () => {
           <TouchableOpacity className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]">
             <AntDesign name="bells" size={24} color="white" />
           </TouchableOpacity>
-          {/* <TouchableOpacity onPress={()=>router.push("/userInfo")} className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]">
+          <TouchableOpacity onPress={()=>router.push("/userInfo")} className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]">
             <Feather name="settings" size={24} color="white" />
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
       </View>
 

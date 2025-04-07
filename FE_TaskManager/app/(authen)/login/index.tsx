@@ -5,7 +5,7 @@ import { fLogin } from "@/fakedb";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
 import React, { useState } from "react";
-import { Text,  View } from "react-native";
+import { Text,  ToastAndroid,  View } from "react-native";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import * as SecureStore from 'expo-secure-store';
 
@@ -20,6 +20,7 @@ const Index = () => {
   const handleSignIn = async () => {
     if (info) {
       setMessage("");
+      ToastAndroid.show("Login successful", ToastAndroid.SHORT);
       await SecureStore.setItemAsync("user", email);
       router.push("/dashboard");
     } else {
@@ -32,7 +33,7 @@ const Index = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="w-screen h-screen flex items-center justify-center"
     >
-      <BackButton href="/" />
+      <BackButton  />
     
       <LinearGradient
         className="absolute top-0 left-0 w-full h-full"

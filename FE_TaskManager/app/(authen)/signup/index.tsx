@@ -60,7 +60,7 @@ const Signup = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-1 items-center justify-center">
-          <BackButton href="/" />
+          <BackButton />
           <LinearGradient
             className="absolute top-0 left-0 w-full h-full"
             colors={["#FFFFFF", "#C5C8DD", "#9EA4CB", "#606BAF", "#1D2760"]}

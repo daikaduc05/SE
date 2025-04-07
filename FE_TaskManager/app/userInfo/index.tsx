@@ -1,22 +1,85 @@
 import { fUser } from "@/fakedb";
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Text, View, TouchableOpacity, Image, TextInput } from "react-native";
+import {
+  Text,
+  View,
+  TouchableOpacity,
+  Image,
+  TextInput,
+  ScrollView,
+  ToastAndroid,
+} from "react-native";
 import * as SecureStore from "expo-secure-store";
+import Animated from "react-native-reanimated";
+import axios from "axios";
+import ImagePickerExample from "@/common/imagePicker";
+import BackButton from "@/common/BackButton";
 
+const user = fUser;
 // Component chính cho trang UserInfo
 const UserInfo = () => {
-  const [username, setUsername] = useState(fUser.username);
-  const [notifications, setNotifications] = useState(fUser.noti_setting);
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [username, setUsername] = useState<string>(fUser.username);
+  const [avatar, setAvatar] = useState<string>(fUser.avatar);
+  const [notifications, setNotifications] = useState<boolean>(
+    fUser.noti_setting
+  );
+  const [currentPassword, setCurrentPassword] = useState<string>("");
+  const [newPassword, setNewPassword] = useState<string>("");
+  const [trueCurrentPassword, setTrueCurrentPassword] =
+    useState<boolean>(false);
 
-  // Xử lý đăng xuất
-  const handleLogout = async () => {
-    await SecureStore.deleteItemAsync("user");
-    router.push("/login");
+  const handleSaveChanges = async () => {
+    const user = {
+      username: username,
+      noti_setting: notifications,
+    };
+    const res = await axios.put(`http://localhost:3000/users/${username}`, user);
+    if(res){
+      ToastAndroid.show("Changes saved successfully", ToastAndroid.SHORT);
+    }
+    else{
+      ToastAndroid.show("Changes saved failed", ToastAndroid.SHORT);
+    }
+    console.log(username);
+    console.log(notifications);
+
+  };
+
+  const handleSaveNewPassword = async () => {
+    if (currentPassword === fUser.password) {
+      const user = {
+        password: newPassword,
+      };
+      const res = await axios.put(
+        `http://localhost:3000/users/${username}`,
+        user
+      );
+      ToastAndroid.show(
+        "Password changed successfully, please login again",
+        ToastAndroid.SHORT
+      );
+      setCurrentPassword("");
+      setNewPassword("");
+
+      if (res) {
+        router.push("/dashboard");
+      }
+    } else {
+      ToastAndroid.show("Current password is incorrect", ToastAndroid.SHORT);
+      setTrueCurrentPassword(false);
+    }
+    console.log(currentPassword);
+    console.log(newPassword);
+  };
+
+  const handleDeleteAccount = async () => {
+    const res = await axios.delete(`http://localhost:3000/users/${username}`);
+    if (res) {
+      router.push("/login");
+    }
   };
 
   return (
@@ -31,85 +94,112 @@ const UserInfo = () => {
       />
 
       {/* Header với nút back */}
-      <View className="flex-row items-center p-6 mt-10">
-        <TouchableOpacity onPress={() => router.back()}>
-          <AntDesign name="arrowleft" size={24} color="white" />
-        </TouchableOpacity>
-        <Text className="text-white text-xl font-bold ml-4">Profile Setting</Text>
+      <View className="flex-row items-start p-6 mt-10 justify-center">
+        <BackButton />
+        <Text className="text-white text-xl font-bold ml-4 ">
+          Profile Setting
+        </Text>
       </View>
 
       {/* Phần chính */}
-      <View className="flex-1 bg-[#1D2760] rounded-t-[40px] mt-6 p-6">
+      <ScrollView className="flex-1 bg-[#1D2760]/80 rounded-t-[40px] mt-6 p-6">
         {/* Phần avatar */}
         <View className="items-center mb-8">
           <Image
             source={
-              fUser.avatar
-                ? { uri: fUser.avatar }
+              avatar
+                ? { uri: avatar }
                 : require("../../assets/images/placeholderAva.jpg")
             }
-            className="w-24 h-24 rounded-full bg-white mb-2"
+            className="w-24 h-24 rounded-full bg-white mb-2 border-4 border-[#CACCFD]"
           />
-          <TouchableOpacity>
-            <Text className="text-white">Choose photo</Text>
-          </TouchableOpacity>
+          <ImagePickerExample setImage={setAvatar} />
         </View>
 
         {/* Profile setting */}
-        <View className="mb-8">
-          <Text className="text-white mb-2">Enter new name</Text>
+        <View className="mb-8 flex-col gap-2">
+          <Text className="text-white mb-4  font-semibold ">
+            Enter new name
+          </Text>
           <TextInput
             value={username}
-            onChangeText={setUsername}
-            className="bg-white/20 p-3 rounded-xl text-white mb-4"
+            onChangeText={(text)=>setUsername(text)}
+            className="bg-[#313384]/50 p-3 rounded-xl text-white mb-4 border border-[#CACCFD]/50"
             placeholderTextColor="rgba(255,255,255,0.5)"
           />
 
           {/* Notifications toggle */}
-          <View className="flex-row justify-between items-center">
-            <Text className="text-white">Notifications</Text>
+          <View className="flex-row gap-3 items-center mt-2">
+            <FontAwesome name="bell" size={24} color="white" />
+            <Text className="text-white font-semibold">Notifications</Text>
             <TouchableOpacity
               onPress={() => setNotifications(!notifications)}
               className={`w-12 h-6 rounded-full ${
-                notifications ? "bg-green-500" : "bg-gray-500"
+                notifications ? "bg-[#5a65e4]" : "bg-gray-500"
               } justify-center px-1`}
             >
-              <View
-                className={`w-4 h-4 rounded-full bg-white ${
-                  notifications ? "ml-6" : "ml-0"
-                }`}
+              <Animated.View
+                className="w-4 h-4 rounded-full bg-white"
+                style={{
+                  transform: [{ translateX: notifications ? 24 : 0 }],
+                  animationDuration: "1000ms",
+                }}
               />
             </TouchableOpacity>
           </View>
+          <TouchableOpacity
+            className="w-fit ml-[50%] h-[30px] bg-[#e3e3e3] rounded-xl items-center justify-center"
+            onPress={handleSaveChanges}
+          >
+            <Text className="text-black font-semibold">Save changes</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Change password */}
         <View className="mb-8">
-          <Text className="text-white mb-2">Current password</Text>
-          <TextInput
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            className="bg-white/20 p-3 rounded-xl text-white mb-4"
-            placeholderTextColor="rgba(255,255,255,0.5)"
-          />
+          <View className="flex-col gap-4">
+            <Text className="text-white font-semibold">Change password</Text>
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                value={currentPassword}
+                onChangeText={(text) => setCurrentPassword(text)}
+                className="bg-[#313384]/50 p-3 rounded-xl text-white mb-4 w-full border border-[#CACCFD]/50"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                placeholder="Enter current password"
+              />
+            </View>
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                value={newPassword}
+                onChangeText={(text) => setNewPassword(text)}
+                className="bg-[#313384]/50 p-3 rounded-xl text-white mb-4 w-full border border-[#CACCFD]/50"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                placeholder="Enter new password"
+              />
+            </View>
+            <TouchableOpacity
+              className="w-fit ml-[50%] h-[30px] bg-[#e3e3e3] rounded-xl items-center justify-center"
+              onPress={handleSaveNewPassword}
+            >
+              <Text className="text-black font-semibold">
+                Save new password
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <Text className="text-white mb-2">New password</Text>
-          <TextInput
-            value={newPassword}
-            onChangeText={setNewPassword}
-            className="bg-white/20 p-3 rounded-xl text-white mb-4"
-            placeholderTextColor="rgba(255,255,255,0.5)"
-          />
-
-          <TouchableOpacity className="bg-[#2f3f96] p-3 px-6 rounded-xl flex-row items-center gap-2">
-            <Text className="text-white font-medium">Save</Text>
-          </TouchableOpacity>
+          <View className="flex-col gap-4 my-5">
+            <Text className="text-white font-semibold">Danger zone</Text>
+            <TouchableOpacity
+              onPress={() => handleDeleteAccount()}
+              className="bg-red-400 p-3 w-fit m-auto px-6 rounded-2xl flex-row items-center gap-2 shadow-lg"
+            >
+              <Text className="text-white font-medium">Delete account!</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
 
 export default UserInfo;
-       
-
