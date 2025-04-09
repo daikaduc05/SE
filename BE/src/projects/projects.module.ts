@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProjectsController } from './projects.controller';
 import { ProjectsService } from './projects.service';
-import { DbModule } from 'src/db/db.module';
+import { DbModule } from '../db/db.module';
 import { projectProviders } from './repository/project.provider';
 import { taskProviders } from './repository/task.provider';
 import { taskUserProviders } from './repository/task-user.provider';

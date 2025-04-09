@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { Project } from './project.entity';
 import { TaskUser } from './task-user.entity';
-import { User } from 'src/users/entities/users.entity';
+import { User } from '../../users/entities/users.entity';
 
 @Entity('tasks')
 export class Task {

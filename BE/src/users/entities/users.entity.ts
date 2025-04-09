@@ -1,9 +1,9 @@
 // User entity - Đại diện cho người dùng trong hệ thống
-import { TaskUser } from 'src/projects/entities/task-user.entity';
-import { RoleUserProject } from 'src/projects/entities/role-user-project.entity';
+import { TaskUser } from '../../projects/entities/task-user.entity';
+import { RoleUserProject } from '../../projects/entities/role-user-project.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { Notification } from './notification.entit';
-import { Task } from 'src/projects/entities/task.entity';
+import { Notification } from './notification.entity';
+import { Task } from '../../projects/entities/task.entity';
 import { NotificationUser } from './notification-user.entity';
 @Entity('users')
 export class User {
@@ -11,7 +11,7 @@ export class User {
   id: number;
 
   @Column()
-  username: string;
+  name: string;
 
   @Column()
   email: string;
@@ -40,3 +40,5 @@ export class User {
   @OneToMany(() => NotificationUser, (notificationUser) => notificationUser.user)
   notificationUser: NotificationUser[];
 }
+
+//npx typeorm migration:generate dist/migrations/AddProductOrField -d dist/data-source.js

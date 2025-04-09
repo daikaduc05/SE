@@ -1,5 +1,5 @@
 import { DataSource } from 'typeorm';
-import { Notification } from '../entities/notification.entit';
+import { Notification } from '../entities/notification.entity';
 
 export const notificationProviders = [
   {

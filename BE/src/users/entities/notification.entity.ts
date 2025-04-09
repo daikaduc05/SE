@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from 'typeorm';
 import { User } from './users.entity';
 import { NotificationUser } from './notification-user.entity';
 
@@ -19,6 +19,6 @@ export class Notification {
   @ManyToOne(() => User, (user) => user.notificationUser)
   createdBy: User;
 
-  @ManyToOne(() => NotificationUser, (notificationUser) => notificationUser.notification)
+  @OneToMany(() => NotificationUser, (notificationUser) => notificationUser.notification)
   notificationUser: NotificationUser[];
 }
