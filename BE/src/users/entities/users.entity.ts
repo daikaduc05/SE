@@ -11,6 +11,9 @@ export class User {
   id: number;
 
   @Column()
+  avatar: string;
+
+  @Column()
   name: string;
 
   @Column()
