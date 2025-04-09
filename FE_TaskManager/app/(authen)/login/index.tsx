@@ -18,14 +18,21 @@ const Index = () => {
     (item) => item.email === email && item.password === password
   );
   const handleSignIn = async () => {
-    if (info) {
-      setMessage("");
-      ToastAndroid.show("Login successful", ToastAndroid.SHORT);
-      await SecureStore.setItemAsync("user", email);
-      router.push("/dashboard");
-    } else {
-      setMessage("Invalid email or password");
-    }
+   if(email === "" || password === ""){
+    ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
+   }
+   else if(email.includes("@gmail.com") === false){
+    ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
+   }
+   else if(info){
+    setMessage("");
+    ToastAndroid.show("Login successful", ToastAndroid.SHORT);
+    await SecureStore.setItemAsync("user", email);
+    router.push("/dashboard");
+   }
+   else{
+    ToastAndroid.show("Invalid email or password", ToastAndroid.SHORT);
+   }
   };
 
   return (

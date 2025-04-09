@@ -11,6 +11,7 @@ import {
   View,
   ScrollView,
   Keyboard,
+  ToastAndroid,
 } from "react-native";
 
 const Signup = () => {
@@ -44,7 +45,14 @@ const Signup = () => {
   const handleSignUp = () => {
     if (password !== confirmPassword) {
       console.log("Password and confirm password do not match");
-    } else {
+    }
+    else if(fullName === "" || email === "" || password === "" || confirmPassword === ""){
+      ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
+    }
+    else if(email.includes("@gmail.com") === false){
+      ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
+    }
+    else {
       console.log("Sign up successful");
     }
   };
