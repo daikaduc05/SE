@@ -75,6 +75,11 @@ const UserInfo = () => {
     console.log(newPassword);
   };
 
+  const handleLogout = async () => {
+    await SecureStore.deleteItemAsync("token");
+    router.push("/login");
+  };
+
   const handleDeleteAccount = async () => {
     const res = await axios.delete(`http://localhost:3000/users/${username}`);
     if (res) {
@@ -194,6 +199,11 @@ const UserInfo = () => {
               className="bg-red-400 p-3 w-fit m-auto px-6 rounded-2xl flex-row items-center gap-2 shadow-lg"
             >
               <Text className="text-white font-medium">Delete account!</Text>
+            </TouchableOpacity>
+          </View>
+          <View className="flex-row items-center gap-2 py-5">
+            <TouchableOpacity onPress={()=>handleLogout()} className="bg-blue-400 w-full p-3 text-center px-6 rounded-2xl flex-row gap-2 shadow-lg">
+              <Text className="text-white m-auto font-medium">Logout</Text>
             </TouchableOpacity>
           </View>
         </View>

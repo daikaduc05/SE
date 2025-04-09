@@ -1,4 +1,5 @@
 export interface ITask {
+   id: string;
    project_id: string;
    description: string;
    state: string;

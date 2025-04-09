@@ -3,7 +3,7 @@ import { fUser } from "@/fakedb";
 import { AntDesign, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect } from "react";
-import { Text, View, TouchableOpacity, Image } from "react-native";
+import { Text, View, TouchableOpacity, Image, ScrollView } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 const user = fUser;
@@ -58,56 +58,66 @@ const Dashboard = () => {
           <TouchableOpacity className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]">
             <AntDesign name="bells" size={24} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={()=>router.push("/userInfo")} className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]">
+          <TouchableOpacity
+            onPress={() => router.push("/userInfo")}
+            className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]"
+          >
             <Feather name="settings" size={24} color="white" />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Danh sách các hoạt động */}
-      <View className="flex-1 bg-white rounded-t-[40px] mt-6 p-6">
-        <Text className="text-[#1D2760] text-xl font-bold mb-4">
-          Your Activity
-        </Text>
-            
-        {project.length > 0 ? (
-          project.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              className="bg-[#F5F6FA] p-4 py-4 rounded-2xl mb-4 flex-row h-fit justify-between items-center"
-            >
-              <View className="flex-row items-center gap-4">
-                <Image
-                  source={
-                    item.avatar
-                      ? { uri: item.avatar }
-                      : require("../../assets/images/placeholderAva.jpg")
-                  }
-                  className="w-16 h-16 rounded-xl"
-                />
-                <View className="flex flex-col gap-2">
-                  <Text className="text-[#1D2760] font-semibold">
-                    {item.name}
-                  </Text>
-                  <Text className="text-gray-500">{item.created_at}</Text>
+      <ScrollView className="flex-1 bg-white rounded-t-[40px] ">
+        <View className="flex-1 bg-white rounded-t-[40px] mt-2 p-6">
+          <Text className="text-[#1D2760] text-xl font-bold mb-4">
+            Your Activity
+          </Text>
+
+          {project.length > 0 ? (
+            project.map((item, index) => (
+              <View
+                key={index}
+                className="bg-[#F5F6FA] p-4 py-4 rounded-2xl mb-4 flex-row h-fit justify-between items-center"
+              >
+                <View className="flex-row items-center gap-4">
+                  <Image
+                    source={
+                      item.avatar
+                        ? { uri: item.avatar }
+                        : require("../../assets/images/placeholderAva.jpg")
+                    }
+                    className="w-16 h-16 rounded-xl"
+                  />
+                  <View className="flex flex-col gap-2">
+                    <Text className="text-[#1D2760] font-semibold">
+                      {item.name}
+                    </Text>
+                    <Text className="text-gray-500">{item.created_at}</Text>
+                  </View>
                 </View>
+                <TouchableOpacity onPress={() => router.push({
+                  pathname: "/dashboard/project/[id]",
+                  params: { id: item.id }
+                })} className="bg-[#2f3f96] p-2 px-4 rounded-xl">
+                  <Text className="text-white">View</Text>
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity className="bg-[#2f3f96] p-2 px-4 rounded-xl">
-                <Text className="text-white">View</Text>
+            ))
+          ) : (
+            <View className="flex-1 justify-center items-center gap-4">
+              <Text className="text-gray-500 text-lg font-medium">
+                No project yet
+              </Text>
+              <Text className="text-gray-500">Create your first project</Text>
+              <TouchableOpacity className="bg-[#2f3f96] p-3 px-6 rounded-xl flex-row items-center gap-2">
+                <AntDesign name="plus" size={20} color="white" />
+                <Text className="text-white font-medium">Create Project</Text>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))
-        ) : (
-         <View className="flex-1 justify-center items-center gap-4">
-          <Text className="text-gray-500 text-lg font-medium">No project yet</Text>
-          <Text className="text-gray-500">Create your first project</Text>
-          <TouchableOpacity className="bg-[#2f3f96] p-3 px-6 rounded-xl flex-row items-center gap-2">
-            <AntDesign name="plus" size={20} color="white" />
-            <Text className="text-white font-medium">Create Project</Text>
-          </TouchableOpacity>
-         </View>
-        )}
-      </View>
+            </View>
+          )}
+        </View>
+      </ScrollView>
     </View>
   );
 };
