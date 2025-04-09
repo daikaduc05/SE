@@ -1,9 +1,16 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { User } from './entities/users.entity';
-import { CreateUserDto } from './dto/create-user.dto';
+import { SignUpDto } from './dto/sign-up.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import * as bcrypt from 'bcrypt';
+import { LoginDto } from './dto/login.dto';
+import { UnauthorizedException } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
+import { config } from 'dotenv';
+import 'reflect-metadata';
 
+config();
 @Injectable()
 export class UsersService {
   constructor(
@@ -19,10 +26,35 @@ export class UsersService {
     return await this.userRepository.findOne({ where: { id } });
   }
 
-  async create(user: CreateUserDto): Promise<User | null> {
+  generateToken(user: User): string {
+    const payload = { id: user.id, email: user.email };
+    const key = process.env.JWT_SECRET;
+    const token = jwt.sign(payload, key as string, { expiresIn: '1h' });
+
+    return token;
+  }
+
+  async login(user: LoginDto): Promise<string | null> {
+    const dtoUser = await this.userRepository.findOne({ where: { email: user.email } });
+    if (!dtoUser) {
+      throw new UnauthorizedException('Email/password does match');
+    }
+    const isMatch = await bcrypt.compare(user.password, dtoUser.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Email/password does match');
+    }
+    return this.generateToken(dtoUser);
+  }
+  async create(user: SignUpDto): Promise<User | null> {
     const newUser = new User();
     newUser.name = user.name;
     newUser.email = user.email;
+    newUser.notiSettings = true;
+    newUser.isBanned = false;
+    const saltRounds = 10;
+    const password: string = user.password;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    newUser.password = hashedPassword;
     return await this.userRepository.save(newUser);
   }
 
