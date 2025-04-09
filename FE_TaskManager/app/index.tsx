@@ -1,7 +1,6 @@
-import { Button, Text, View, TouchableOpacity } from "react-native";
+import { Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import Animated, { useSharedValue } from "react-native-reanimated";
 import AuthenButton from "@/common/Button";
 
 export default function Index() {
