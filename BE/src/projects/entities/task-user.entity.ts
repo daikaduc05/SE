@@ -1,14 +1,14 @@
-import { Entity, PrimaryColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { User } from '../../users/entities/users.entity';
 import { Task } from './task.entity';
 
-@Entity('task_user')
+@Entity('tasks_users')
 export class TaskUser {
-  @PrimaryColumn({ name: 'user_id' })
-  userId: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @PrimaryColumn({ name: 'task_id' })
-  taskId: number;
+  @Column({ name: 'assign_time' })
+  assignTime: Date;
 
   @ManyToOne(() => User, (user) => user.taskUsers)
   user: User;
