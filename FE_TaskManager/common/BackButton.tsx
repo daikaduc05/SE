@@ -10,14 +10,13 @@ const BackButton = () => {
       onPress={() => router.back()}
       style={{
         position: "absolute", 
-        top: 20,
+        top: 30,
         left: 10,
         zIndex: 10,
         flexDirection: "row",
         alignItems: "flex-end",
         gap: 4
       }}
-      className="absolute top-5 left-5 z-10 flex flex-row items-end gap-4"
     >
       <Ionicons
         name="arrow-back"

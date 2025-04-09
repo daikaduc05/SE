@@ -2,7 +2,7 @@ import { IProjects } from "./model/IProjects"
 
 export const fLogin = [
     {
-        email: "cac",
+        email: "ha@gmail.com",
         password: "123456",
     }, 
 ]

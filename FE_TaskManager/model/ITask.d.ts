@@ -2,7 +2,7 @@ export interface ITask {
    id: string;
    project_id: string;
    description: string;
-   state: string;
+   state: EState;
    priority: string;
    task_name: string;
    created_time: string;

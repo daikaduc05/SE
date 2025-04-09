@@ -14,11 +14,12 @@ import BackButton from "@/common/BackButton";
 import CalendarPicker from "@/common/CalenderHeader";
 import { ITask } from "@/model/ITask";
 import dayjs from "dayjs";
+import TaskItem from "@/common/TaskItem";
 
 const tasksList = [
   {
     id: "1",
-    project_id: "project-1", 
+    project_id: "project-1",
     description: "Đi dắt chó đi dạo buổi sáng",
     state: "Done",
     priority: "Medium",
@@ -26,32 +27,32 @@ const tasksList = [
     created_time: "2025-04-08",
     deadline: "2025-04-08",
     done_at: "2025-04-08",
-    created_by: "user-1"
+    created_by: "user-1",
   },
   {
     id: "2",
     project_id: "project-1",
-    description: "Đi dắt chó đi dạo buổi chiều", 
+    description: "Đi dắt chó đi dạo buổi chiều",
     state: "Not Done", // Thay đổi trạng thái thành Not Done
     priority: "High",
     task_name: "Walk my dog",
     created_time: "2025-04-08",
     deadline: "2025-04-08",
     done_at: "",
-    created_by: "user-2"
+    created_by: "user-2",
   },
   {
-    id: "3", 
+    id: "3",
     project_id: "project-1",
     description: "Đi dắt chó đi dạo buổi tối",
     state: "Not Done", // Thay đổi trạng thái thành Not Done
-    priority: "Low", 
+    priority: "Low",
     task_name: "Walk my dog",
     created_time: "2025-04-08",
     deadline: "2025-04-08",
     done_at: "",
-    created_by: "user-3"
-  }
+    created_by: "user-3",
+  },
 ];
 
 // Component chính cho trang chi tiết dự án
@@ -60,24 +61,46 @@ const ProjectDetail = () => {
   const enum EFilter {
     Done = "Done",
     NotDone = "Not Done",
-    All = "All" 
+    All = "All",
   }
-  
+
   const enum EType {
     Today = "today",
-    All = "all"
+    All = "all",
   }
   const { id } = useLocalSearchParams();
   const project = fProject.find((p) => p.id === id);
-  const [filter, setFilter] = useState<EFilter>(EFilter.All );
+  const [filter, setFilter] = useState<EFilter>(EFilter.All);
   const [type, setType] = useState<EType>(EType.Today);
   const animatedLine = useRef(new Animated.Value(0)).current;
   const [date, setDate] = useState<string>(dayjs().format("YYYY-MM-DD"));
-  const [tasks, setTasks] = useState<ITask[]>(tasksList);
+  const [tasks, setTasks] = useState<ITask[]>(
+    tasksList.filter((t) => t.created_time === date)
+  );
+  const toggleTaskStatus = (taskId: string) => {
+    setTasks((prevTasks: ITask[]) =>
+      prevTasks.map((task: ITask) =>
+        task.id === taskId
+          ? {
+              ...task,
+              state:
+                task.state === EFilter.Done ? EFilter.NotDone : EFilter.Done,
+            }
+          : task
+      )
+    );
+  };
+
   useEffect(() => {
-    setTasks(tasksList.filter((t) => t.created_time === date))
-   
-  }, [date])
+    let filteredTasks = tasksList;
+    if (filter === EFilter.Done) {
+      filteredTasks = filteredTasks.filter((t) => t.state === EFilter.Done);
+    } else if (filter === EFilter.NotDone) {
+      filteredTasks = filteredTasks.filter((t) => t.state === EFilter.NotDone);
+    }
+    filteredTasks = filteredTasks.filter((t) => t.created_time === date);
+    setTasks(filteredTasks);
+  }, [date, filter]);
 
   useEffect(() => {
     Animated.timing(animatedLine, {
@@ -85,30 +108,27 @@ const ProjectDetail = () => {
       duration: 300,
       useNativeDriver: false,
     }).start();
-   
   }, [type]);
 
   const handleSetToday = () => {
-    setType(EType.Today)
-    const today = new Date()
-    const todayString = today.toISOString().split('T')[0]
-    setDate(todayString)
-    setTasks(tasksList.filter((t) => t.created_time === todayString))
-  }
+    setType(EType.Today);
+    const today = new Date();
+    const todayString = today.toISOString().split("T")[0];
+    setDate(todayString);
+    setTasks(tasks.filter((t) => t.created_time === todayString));
+  };
   const handleSetAll = () => {
-    setType(EType.All)
-    setTasks(tasksList)
-  }
+    setType(EType.All);
+    setTasks(tasksList);
+  };
 
   // Tính toán % công việc hoàn thành
   const completedPercentage = Math.round(
     (tasks.filter((t) => t.state === EFilter.Done).length / tasks.length) * 100
   );
- 
-  
-  
+
   return (
-    <View className="flex-1 bg-[#1D2760]">
+    <View className="flex-1 bg-[#1D2760] ">
       {/* Gradient background */}
       <LinearGradient
         className="absolute top-0 left-0 w-full h-full"
@@ -120,10 +140,10 @@ const ProjectDetail = () => {
 
       {/* Header */}
       <BackButton />
-      <View className="flex-row justify-between items-center p-6 mt-11">
+      <View className="flex-row justify-between items-center p-6 mt-14">
         <Text className="text-white text-xl font-bold">{project?.name}</Text>
-        <TouchableOpacity>
-          <AntDesign name="plus" size={24} color="white" />
+        <TouchableOpacity className="bg-[#4143c6] p-4 rounded-full">
+          <Text className="text-white text-lg font-medium">Add Task</Text>
         </TouchableOpacity>
       </View>
 
@@ -135,23 +155,28 @@ const ProjectDetail = () => {
             <Text className="text-white text-lg mb-2 font-semibold">
               Today's Monday
             </Text>
-            <Text className="text-gray-300">Create at :{project?.created_at}</Text>
+            <Text className="text-gray-300">
+              Create at :{project?.created_at}
+            </Text>
           </View>
           <View className="flex-col  items-end gap-6">
             <Text className="text-white text-lg font-semibold">
-              {completedPercentage ? (completedPercentage + "% Done") : "No tasks"}
+              {completedPercentage
+                ? completedPercentage + "% Done"
+                : tasks.length === 0
+                ? "No tasks"
+                : "0% Done"}
             </Text>
             <Animated.View
-              className={`w-[130%] ${completedPercentage ? "h-[6px]" : "hidden"} flex-col items-end rounded-full border-[0.5px] border-white`}
+              className={`w-[100px] h-[6px] flex-col items-end rounded-full border-[0.5px] border-white`}
             >
               <Animated.View
-              style={{
-                width: completedPercentage && `${completedPercentage}%` 
-              }}
+                style={{
+                  width: completedPercentage && `${completedPercentage}%`,
+                }}
                 className={`h-full rounded-full bg-white`}
               ></Animated.View>
             </Animated.View>
-           
           </View>
         </View>
 
@@ -162,18 +187,16 @@ const ProjectDetail = () => {
               className="flex-row items-center gap-2 bg-[#313384]/50 px-4 py-2 rounded-xl"
               onPress={() => handleSetToday()}
             >
-              <Text className="text-white font-medium">{
-                tasks.filter((t) => t.created_time === date).length
-              }</Text>
+              <Text className="text-white font-medium">
+                {tasksList.filter((t) => t.created_time === date).length}
+              </Text>
               <Text className="text-gray-300">Tasks today</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className="flex-row items-center gap-2 bg-[#313384]/50 px-4 py-2 rounded-xl"
               onPress={() => handleSetAll()}
             >
-              <Text className="text-white font-medium">{
-                tasksList.length
-              }</Text>
+              <Text className="text-white font-medium">{tasksList.length}</Text>
               <Text className="text-gray-300">All tasks</Text>
             </TouchableOpacity>
           </View>
@@ -219,8 +242,8 @@ const ProjectDetail = () => {
               key={f}
               onPress={() => setFilter(f)}
               className={`px-4 py-2  rounded-full ${
-                filter === f 
-                  ? f === EFilter.Done 
+                filter === f
+                  ? f === EFilter.Done
                     ? "bg-green-500"
                     : f === EFilter.NotDone
                     ? "bg-red-500"
@@ -228,52 +251,26 @@ const ProjectDetail = () => {
                   : "bg-transparent"
               }`}
             >
-              <Text className="text-white">
-                {f}
-              </Text>
+              <Text className="text-white">{f}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Calendar */}
-      <View>
-        <CalendarPicker date={date} onDateChange={(date) => {
-          setDate(date)
-        }} />
-      </View>
+        <View>
+          <CalendarPicker
+            date={date}
+            onDateChange={(date) => {
+              setDate(date);
+            }}
+          />
+        </View>
 
         {/* Tasks list */}
         <ScrollView className="flex-1">
-          {tasks
-            .filter((task) => {
-              return filter === EFilter.All ? true : task.state === filter;
-            })
-            .map((task) => (
-              <View key={task.id} className="bg-white rounded-xl p-4 mb-4">
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-[#1D2760] font-medium">
-                      {task.task_name}
-                  </Text>
-                  <View
-                    className={`px-3 py-1 rounded-full ${
-                      task.state === EFilter.Done
-                        ? "bg-green-100"
-                        : "bg-red-100"
-                    }`}
-                  >
-                    <Text
-                      className={`${
-                        task.state === EFilter.Done
-                          ? "text-green-600"
-                          : "text-red-600"
-                      }`}
-                    >
-                      {task.state}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            ))}
+          {tasks.map((task) => (
+            <TaskItem key={task.id} task={task} onToggle={toggleTaskStatus} />
+          ))}
         </ScrollView>
       </View>
     </View>

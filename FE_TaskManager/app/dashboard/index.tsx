@@ -6,12 +6,15 @@ import { useEffect } from "react";
 import { Text, View, TouchableOpacity, Image, ScrollView } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
+import dayjs from "dayjs";
+import ClockLive from "@/common/ClockLive";
 const user = fUser;
 const project = fProject;
 
 // Component chính cho Dashboard
 const Dashboard = () => {
   const time = new Date().getHours();
+
   const greeting =
     time < 12 ? "Good Morning" : time < 18 ? "Good Afternoon" : "Good Evening";
   useEffect(() => {
@@ -53,27 +56,33 @@ const Dashboard = () => {
             <Text className="text-gray-300">{greeting}</Text>
           </View>
         </View>
-
         <View className="flex-row gap-3">
-          <TouchableOpacity className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]">
-            <AntDesign name="bells" size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => router.push("/userInfo")}
-            className="bg-[#313384] p-2 rounded-2xl border-4 border-[#CACCFD]"
-          >
-            <Feather name="settings" size={24} color="white" />
-          </TouchableOpacity>
+          <ClockLive />
         </View>
       </View>
 
       {/* Danh sách các hoạt động */}
-      <ScrollView className="flex-1 bg-white rounded-t-[40px] ">
-        <View className="flex-1 bg-white rounded-t-[40px] mt-2 p-6">
-          <Text className="text-[#1D2760] text-xl font-bold mb-4">
-            Your Activity
-          </Text>
-
+      <View className="flex-row gap-2 items-start my-5 mx-5 justify-between ">
+        <TouchableOpacity
+          onPress={() => router.push("/dashboard/project/create")}
+          className="bg-[#272984] p-4 rounded-full"
+        >
+         <Text className="text-white text-lg px-2 font-medium">Create new</Text>
+        </TouchableOpacity>
+        <View className="flex-row gap-2 items-center">
+          <TouchableOpacity
+            onPress={() => router.push("/userInfo")}
+            className="bg-[#313384] p-4 rounded-full "
+          >
+            <Feather name="settings" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity className="bg-[#313384] p-4 rounded-full ">
+            <AntDesign name="bells" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <ScrollView className="flex-1 bg-[#1D2760]/80 rounded-t-[40px]">
+        <View className="flex-1 rounded-t-[40px] mt-2 p-6">
           {project.length > 0 ? (
             project.map((item, index) => (
               <View
@@ -96,10 +105,15 @@ const Dashboard = () => {
                     <Text className="text-gray-500">{item.created_at}</Text>
                   </View>
                 </View>
-                <TouchableOpacity onPress={() => router.push({
-                  pathname: "/dashboard/project/[id]",
-                  params: { id: item.id }
-                })} className="bg-[#2f3f96] p-2 px-4 rounded-xl">
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/dashboard/project/[id]",
+                      params: { id: item.id },
+                    })
+                  }
+                  className="bg-[#2f3f96] p-2 px-4 rounded-xl"
+                >
                   <Text className="text-white">View</Text>
                 </TouchableOpacity>
               </View>
@@ -110,7 +124,10 @@ const Dashboard = () => {
                 No project yet
               </Text>
               <Text className="text-gray-500">Create your first project</Text>
-              <TouchableOpacity className="bg-[#2f3f96] p-3 px-6 rounded-xl flex-row items-center gap-2">
+              <TouchableOpacity
+                onPress={() => router.push("/dashboard/project/create")}
+                className="bg-[#2f3f96] p-3 px-6 rounded-xl flex-row items-center gap-2"
+              >
                 <AntDesign name="plus" size={20} color="white" />
                 <Text className="text-white font-medium">Create Project</Text>
               </TouchableOpacity>
