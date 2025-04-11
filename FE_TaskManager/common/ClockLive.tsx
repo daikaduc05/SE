@@ -39,12 +39,12 @@ const LiveClock = () => {
   return (
     <View className="items-center">
       {/* Hiển thị ngày tháng */}
-      <Text className="text-white text-lg">
+      <Text className="text-white text-sm">
         {formatDate(currentTime)}
       </Text>
       
       {/* Hiển thị giờ phút giây */}
-      <Text className="text-white text-3xl font-bold">
+      <Text className="text-white text-lg font-bold">
         {formatTime(currentTime)}
       </Text>
     </View>

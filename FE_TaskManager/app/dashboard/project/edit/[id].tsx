@@ -1,7 +1,6 @@
 import { AntDesign } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Text,
   View,
@@ -14,10 +13,12 @@ import BackButton from "@/common/BackButton";
 import CalendarPicker from "@/common/CalenderHeader";
 import Toggle from "@/common/Toggle";
 import dayjs from "dayjs";
+import { router, useLocalSearchParams } from "expo-router";
 
-// Component tạo dự án mới
-const CreateProject = () => {
+// Component chỉnh sửa dự án
+const EditProject = () => {
   // Các state quản lý thông tin dự án
+  const { id } = useLocalSearchParams(); // Assuming `id` is passed as a parameter
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [members, setMembers] = useState<string[]>([]);
@@ -25,25 +26,48 @@ const CreateProject = () => {
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [isLimitDate, setIsLimitDate] = useState(false);
 
+  // Fetch the project data by ID (simulating here with a mock project)
+  useEffect(() => {
+    // Fetch existing project data by id (replace this with an actual API call)
+    const existingProject = {
+      projectName: "Project A",
+      description: "Description of Project A",
+      members: ["user1@gmail.com", "user2@gmail.com"],
+      endDate: "2025-12-31",
+      isLimitDate: true,
+    };
+    setProjectName(existingProject.projectName);
+    setDescription(existingProject.description);
+    setMembers(existingProject.members);
+    setDate(existingProject.endDate);
+    setIsLimitDate(existingProject.isLimitDate);
+  }, [id]);
+
   // Hàm thêm thành viên mới
   const handleAddMember = () => {
     if (memberEmail && !members.includes(memberEmail) && memberEmail.includes("@gmail.com")) {
       setMembers([...members, memberEmail]);
       setMemberEmail("");
     }
-    else{
+    else {
       ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
     }
   };
 
-  // Hàm xử lý tạo dự án
-  const handleCreateProject = () => {
-    // Xử lý logic tạo dự án ở đây
-    if(projectName === ""|| description === ""|| members.length === 0){
+  // Hàm xử lý cập nhật dự án
+  const handleUpdateProject = () => {
+    if (projectName === "" || description === "" || members.length === 0) {
       ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
-    }
-    else{
-      router.back();
+    } else {
+      // Handle project update logic here
+      console.log("Updated Project:", {
+        projectName,
+        description,
+        members,
+        date,
+        isLimitDate,
+      });
+      router.back(); // Go back to the previous screen
     }
   };
 
@@ -62,13 +86,12 @@ const CreateProject = () => {
       <BackButton />
       <View className="flex-row items-center mx-auto h-fit p-3 my-10 w-fit px-5 bg-[#496FCF] rounded-full">
         <Text className="text-white text-xl font-bold ">
-          Create New Project
+          Edit Project
         </Text>
       </View>
 
-      {/* Form tạo dự án */}
+      {/* Form chỉnh sửa dự án */}
       <ScrollView className="flex-1 bg-[#1D2760] rounded-t-[40px] px-6 py-8">
-        
         <View className="flex-col mt-4 gap-6">
           {/* Tên dự án */}
           <View className="flex-col gap-2">
@@ -148,19 +171,30 @@ const CreateProject = () => {
             />
           </View>
 
-          {/* Nút tạo dự án */}
+          {/* Nút cập nhật dự án */}
+          <View className="flex-row justify-between gap-2 pb-14">
           <TouchableOpacity
-            onPress={handleCreateProject}
-            className="bg-[#2f3f96] p-4 rounded-full mt-6"
+            onPress={()=>router.back()}
+            className="bg-[#E26D90] p-4 rounded-full mt-6"
           >
             <Text className="text-white text-center font-bold text-lg">
-              Create Project
+              Cancel
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleUpdateProject}
+            className="bg-[#8D8CC3] p-4 rounded-full mt-6"
+          >
+            <Text className="text-white text-center font-bold text-lg">
+              Update Project
+            </Text>
+          </TouchableOpacity>
+
+          </View>
         </View>
       </ScrollView>
     </View>
   );
 };
 
-export default CreateProject;
+export default EditProject;

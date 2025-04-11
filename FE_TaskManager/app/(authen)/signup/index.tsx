@@ -1,8 +1,9 @@
 import BackButton from "@/common/BackButton";
 import AuthenButton from "@/common/Button";
 import InputLabel from "@/common/InputLabel";
+import axios from "axios";
 import { LinearGradient } from "expo-linear-gradient";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -42,7 +43,7 @@ const Signup = () => {
     };
   }, []);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (password !== confirmPassword) {
       console.log("Password and confirm password do not match");
     }
@@ -53,7 +54,21 @@ const Signup = () => {
       ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
     }
     else {
-      console.log("Sign up successful");
+      const res = await axios.post("http://192.168.141.97:3000//users/signup", {
+        name: fullName,
+        email: email,
+        password: password,
+      },{
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      if(res){
+        console.log(res.data);
+        setMessage("");
+        ToastAndroid.show("Sign up successfully", ToastAndroid.SHORT);
+        router.push("/login");
+      }
     }
   };
   return (

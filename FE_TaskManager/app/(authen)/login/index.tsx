@@ -8,32 +8,50 @@ import React, { useState } from "react";
 import { Text,  ToastAndroid,  View } from "react-native";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import * as SecureStore from 'expo-secure-store';
+import axios from "axios";
 
+const EUser = {
+  email : String,
+  password : String,
+}
 const Index = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [message, setMessage] = useState("");
-  const info = fLogin.find(
-    (item) => item.email === email && item.password === password
-  );
-  const handleSignIn = async () => {
-   if(email === "" || password === ""){
-    ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
-   }
-   else if(email.includes("@gmail.com") === false){
-    ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
-   }
-   else if(info){
-    setMessage("");
-    ToastAndroid.show("Login successful", ToastAndroid.SHORT);
-    await SecureStore.setItemAsync("user", email);
-    router.push("/dashboard");
-   }
-   else{
-    ToastAndroid.show("Invalid email or password", ToastAndroid.SHORT);
-   }
-  };
+  // const handleSignIn = async () => {
+  //   if (email === "" || password === "") {
+  //     ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
+  //     console.log("Please fill in all fields");
+  //     return;
+  //   }
+  //   else{
+  //     try {
+  //       const res = await axios.post("http://192.168.141.97:3000/users/login", {
+  //         email: email,
+  //         password: password,
+  //       },
+  //       {
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       });
+  //       console.log(res.data);
+  //       if(res) {
+  //         setMessage("");
+  //         await SecureStore.setItemAsync("user", res.data);
+  //         router.push("/dashboard");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error during sign-in:", error);
+  //       ToastAndroid.show("An error occurred", ToastAndroid.SHORT);
+        
+  //     }
+  //   }
+  // }
+  const handleSignIn = () =>{
+    router.push("/dashboard")
+  }
 
   return (
     <KeyboardAvoidingView

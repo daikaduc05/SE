@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { Text, View, TouchableOpacity, Image, ScrollView } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
-import dayjs from "dayjs";
 import ClockLive from "@/common/ClockLive";
 const user = fUser;
 const project = fProject;
@@ -22,6 +21,7 @@ const Dashboard = () => {
       const user = await SecureStore.getItemAsync("user");
       if (!user) {
         router.push("/login");
+        return;
       }
     };
     getUser();
@@ -65,18 +65,23 @@ const Dashboard = () => {
       <View className="flex-row gap-2 items-start my-5 mx-5 justify-between ">
         <TouchableOpacity
           onPress={() => router.push("/dashboard/project/create")}
-          className="bg-[#272984] p-4 rounded-full"
+          activeOpacity={0.85}  
+         
+          className="bg-[#313384] px-6 py-4 rounded-full border-2 border-[#cdcdcd] shadow-2xl flex-row items-center justify-center"
         >
-         <Text className="text-white text-lg px-2 font-medium">Create new</Text>
+          <Text className="text-white text-lg font-semibold tracking-wide">
+            🚀 Create New
+          </Text>
         </TouchableOpacity>
+
         <View className="flex-row gap-2 items-center">
           <TouchableOpacity
             onPress={() => router.push("/userInfo")}
-            className="bg-[#313384] p-4 rounded-full "
+            className="bg-[#313384] p-4 rounded-full  border-2 border-[#cdcdcd]"
           >
             <Feather name="settings" size={24} color="white" />
           </TouchableOpacity>
-          <TouchableOpacity className="bg-[#313384] p-4 rounded-full ">
+          <TouchableOpacity className="bg-[#313384] p-4 rounded-full  border-2 border-[#cdcdcd]">
             <AntDesign name="bells" size={24} color="white" />
           </TouchableOpacity>
         </View>

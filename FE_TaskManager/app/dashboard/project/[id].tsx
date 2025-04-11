@@ -1,7 +1,7 @@
 import { fProject } from "@/fakedb";
 import { AntDesign } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Text,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Image,
 } from "react-native";
 import BackButton from "@/common/BackButton";
 import CalendarPicker from "@/common/CalenderHeader";
@@ -77,7 +78,7 @@ const ProjectDetail = () => {
   const [tasks, setTasks] = useState<ITask[]>(
     tasksList.filter((t) => t.created_time === date)
   );
-  const toggleTaskStatus = (taskId: string) => {
+  const toggleTaskStatus = (taskId:String) => {
     setTasks((prevTasks: ITask[]) =>
       prevTasks.map((task: ITask) =>
         task.id === taskId
@@ -98,7 +99,9 @@ const ProjectDetail = () => {
     } else if (filter === EFilter.NotDone) {
       filteredTasks = filteredTasks.filter((t) => t.state === EFilter.NotDone);
     }
-    filteredTasks = filteredTasks.filter((t) => t.created_time === date);
+    if (type !== EType.All) {
+      filteredTasks = filteredTasks.filter((t) => t.created_time === date);
+    }
     setTasks(filteredTasks);
   }, [date, filter]);
 
@@ -120,6 +123,7 @@ const ProjectDetail = () => {
   const handleSetAll = () => {
     setType(EType.All);
     setTasks(tasksList);
+    console.log(date);
   };
 
   // Tính toán % công việc hoàn thành
@@ -141,8 +145,19 @@ const ProjectDetail = () => {
       {/* Header */}
       <BackButton />
       <View className="flex-row justify-between items-center p-6 mt-14">
-        <Text className="text-white text-xl font-bold">{project?.name}</Text>
-        <TouchableOpacity className="bg-[#4143c6] p-4 rounded-full">
+        <View className="flex-row items-center gap-3">
+          <Text className="text-white text-xl font-bold">{project?.name}</Text>
+          <TouchableOpacity onPress={() => router.push(`/dashboard/project/edit/${id}`)}>
+            <AntDesign name="edit" size={24} color="white" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push(`/dashboard/project/detail/${id}`)}>
+            <AntDesign name="eyeo" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+        <TouchableOpacity
+          onPress={() => router.push("/dashboard/project/task/create")}
+          className="bg-[#4143c6] p-4 rounded-full"
+        >
           <Text className="text-white text-lg font-medium">Add Task</Text>
         </TouchableOpacity>
       </View>
@@ -269,7 +284,7 @@ const ProjectDetail = () => {
         {/* Tasks list */}
         <ScrollView className="flex-1">
           {tasks.map((task) => (
-            <TaskItem key={task.id} task={task} onToggle={toggleTaskStatus} />
+            <TaskItem key={task.id} task={task} onToggle={()=>toggleTaskStatus(task.id)} />
           ))}
         </ScrollView>
       </View>

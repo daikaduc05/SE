@@ -1,21 +1,25 @@
-import React, { useRef } from 'react';
-import { View, Text, PanResponder, Animated, StyleSheet } from 'react-native';
+import { router } from "expo-router";
+import React, { useRef } from "react";
+import {
+  View,
+  Text,
+  PanResponder,
+  Animated,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 
-const TaskItem = ({ task, onToggle }: { task: any, onToggle: any }) => {
+const TaskItem = ({ task, onToggle }: { task: any; onToggle: any }) => {
   const pan = useRef(new Animated.ValueXY()).current;
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-     
-      onPanResponderMove: Animated.event(
-        [
-          null,
-          { dx: pan.x },
-        ],
-        { useNativeDriver: false }
-      ),
+
+      onPanResponderMove: Animated.event([null, { dx: pan.x }], {
+        useNativeDriver: false,
+      }),
       onPanResponderRelease: (e, gestureState) => {
         if (gestureState.dx > 120) {
           onToggle(task.id);
@@ -35,28 +39,31 @@ const TaskItem = ({ task, onToggle }: { task: any, onToggle: any }) => {
       style={[
         styles.container,
         {
-          transform: [{ translateX: pan.x }]
-        }
+          transform: [{ translateX: pan.x }],
+        },
       ]}
     >
-      <View style={styles.contentWrapper}>
-        <Text style={styles.taskName}>
-          {task.task_name}
-        </Text>
-        <View
-          style={[
-            styles.stateContainer,
-            task.state === "Done" ? styles.doneState : styles.notDoneState
-          ]}
+      <View>
+        <TouchableOpacity
+          onPress={() => router.push(`/dashboard/project/task/${task.id}]`)}
+          style={styles.contentWrapper}
         >
-          <Text
+          <Text style={styles.taskName}>{task.task_name}</Text>
+          <View
             style={[
-              task.state === "Done" ? styles.doneText : styles.notDoneText
+              styles.stateContainer,
+              task.state === "Done" ? styles.doneState : styles.notDoneState,
             ]}
           >
-            {task.state}
-          </Text>
-        </View>
+            <Text
+              style={[
+                task.state === "Done" ? styles.doneText : styles.notDoneText,
+              ]}
+            >
+              {task.state}
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
     </Animated.View>
   );
@@ -64,37 +71,37 @@ const TaskItem = ({ task, onToggle }: { task: any, onToggle: any }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16
+    marginBottom: 16,
   },
   contentWrapper: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center'
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   taskName: {
-    color: '#1D2760',
-    fontWeight: '500'
+    color: "#1D2760",
+    fontWeight: "500",
   },
   stateContainer: {
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 9999
+    borderRadius: 9999,
   },
   doneState: {
-    backgroundColor: '#dcfce7'
+    backgroundColor: "#dcfce7",
   },
   notDoneState: {
-    backgroundColor: '#fee2e2'
+    backgroundColor: "#fee2e2",
   },
   doneText: {
-    color: '#16a34a'
+    color: "#16a34a",
   },
   notDoneText: {
-    color: '#dc2626'
-  }
+    color: "#dc2626",
+  },
 });
 
 export default TaskItem;
