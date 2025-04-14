@@ -9,6 +9,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { config } from 'dotenv';
 import 'reflect-metadata';
+import { Role } from './entities/role.entity';
 
 config();
 @Injectable()
@@ -16,14 +17,20 @@ export class UsersService {
   constructor(
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<User>,
+    @Inject('ROLE_REPOSITORY')
+    private roleRepository: Repository<Role>,
   ) {}
-
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
-  }
 
   async findOne(id: number): Promise<User | null> {
     return await this.userRepository.findOne({ where: { id } });
+  }
+
+  async findAll(): Promise<User[] | null> {
+    return await this.userRepository.find();
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    return await this.userRepository.findOne({ where: { email } });
   }
 
   generateToken(user: User): string {
@@ -63,12 +70,15 @@ export class UsersService {
     if (!existingUser) {
       throw new NotFoundException('User not found');
     }
-    existingUser.name = user.name;
-    existingUser.email = user.email;
+    Object.assign(existingUser, user);
     return await this.userRepository.save(existingUser);
   }
 
   async delete(id: number): Promise<void> {
     await this.userRepository.delete(id);
+  }
+
+  async findRole(rolename: string): Promise<Role | null> {
+    return await this.roleRepository.findOne({ where: { name: rolename } });
   }
 }

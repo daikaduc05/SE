@@ -8,9 +8,6 @@ export class Task {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ name: 'project_id' })
-  projectId: number;
-
   @Column({ name: 'task_description' })
   description: string;
 

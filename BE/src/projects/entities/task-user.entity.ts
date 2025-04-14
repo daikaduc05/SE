@@ -1,8 +1,9 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { User } from '../../users/entities/users.entity';
 import { Task } from './task.entity';
 
 @Entity('tasks_users')
+@Unique(['user', 'task'])
 export class TaskUser {
   @PrimaryGeneratedColumn()
   id: number;

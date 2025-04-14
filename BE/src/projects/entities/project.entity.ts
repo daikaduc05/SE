@@ -13,6 +13,12 @@ export class Project {
   @Column()
   description: string;
 
+  @Column()
+  startDate: Date;
+
+  @Column()
+  endDate: Date;
+
   @OneToMany(() => RoleUserProject, (roleUserProject) => roleUserProject.project)
   roleUserProjects: RoleUserProject[];
 
