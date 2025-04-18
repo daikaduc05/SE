@@ -10,6 +10,7 @@ import * as jwt from 'jsonwebtoken';
 import { config } from 'dotenv';
 import 'reflect-metadata';
 import { Role } from './entities/role.entity';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 config();
 @Injectable()
@@ -109,13 +110,18 @@ export class UsersService {
     return await this.userRepository.delete(userId);
   }
 
-  async changePassword(userId: number, newPassword: string): Promise<User | null> {
+  async changePassword(userId: number, body: ChangePasswordDto): Promise<User | null> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
-    newPassword = await bcrypt.hash(newPassword, 10);
-    user.password = newPassword;
+    const { oldPassword, newPassword } = body;
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      throw new UnauthorizedException('Old password does not match');
+    }
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
     return await this.userRepository.save(user);
   }
 }
