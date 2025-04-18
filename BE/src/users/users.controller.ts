@@ -1,42 +1,74 @@
-import { Controller, Get, Param, Post, Body, Put, UseGuards, Request } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  Put,
+  UseGuards,
+  Request,
+  Delete,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { SignUpDto } from './dto/sign-up.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { LoginDto } from './dto/login.dto';
-import { AuthenticateGuard } from 'src/authenticate/authenticate.guard';
+import { UserSignUpDto } from './dto/sign-up.dto';
+import { UserUpdateDto } from './dto/update-user.dto';
+import { UserLoginDto } from './dto/login.dto';
+import { AuthenticateGuard } from 'src/users/authenticate/authenticate.guard';
 import { CustomRequest } from 'src/custom-interface';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { Logger } from '@nestjs/common';
 @Controller('users')
 export class UsersController {
+  private readonly logger: Logger = new Logger(UsersController.name);
   constructor(private readonly usersService: UsersService) {}
-  @ApiBearerAuth('access-token')
-  @UseGuards(AuthenticateGuard)
-  @Get()
+
+  @Get('/')
   async findAll() {
+    this.logger.log('[Start Controller] findAll');
     return await this.usersService.findAll();
   }
 
-  @ApiBearerAuth('access-token')
-  @UseGuards(AuthenticateGuard)
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    return await this.usersService.findOne(+id);
-  }
-
-  @Post('/signup')
-  async signUp(@Body() user: SignUpDto) {
+  @Post('/')
+  async signUp(@Body() user: UserSignUpDto) {
+    this.logger.log('[Start Controller] signUp');
     return await this.usersService.create(user);
   }
 
   @Post('/login')
-  async login(@Body() user: LoginDto) {
+  async login(@Body() user: UserLoginDto) {
+    this.logger.log('[Start Controller] login');
     return await this.usersService.login(user);
   }
 
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Put('')
-  async update(@Body() user: UpdateUserDto, @Request() req: CustomRequest) {
+  @Get('/:id')
+  async find(@Param('id') id: string) {
+    this.logger.log('[Start Controller] find profile by id');
+    return await this.usersService.findOne(+id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Put('/')
+  async update(@Body() user: UserUpdateDto, @Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] update user profile');
     return await this.usersService.update(req.userId, user);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Put('/password')
+  async changePassword(@Body() newPassword: string, @Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] change password');
+    return await this.usersService.changePassword(req.userId, newPassword);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Delete('/')
+  async delete(@Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] delete user');
+    return await this.usersService.deleteSelf(req.userId);
   }
 }

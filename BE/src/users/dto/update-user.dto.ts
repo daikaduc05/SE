@@ -1,15 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsOptional, IsString } from 'class-validator';
-export class UpdateUserDto {
+import { IsBoolean, IsOptional, IsString } from 'class-validator';
+export class UserUpdateDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   name: string;
 
   @ApiProperty({ required: false })
-  @IsEmail()
-  email: string;
-
   @IsOptional()
-  userId: number;
+  @IsString()
+  avatar: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  notiSettings: boolean;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  isBanned: boolean;
 }
