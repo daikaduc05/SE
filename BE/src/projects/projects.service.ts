@@ -1,4 +1,10 @@
-import { Inject, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { RoleUserProject } from './entities/role-user-project.entity';
 import { Project } from './entities/project.entity';
@@ -9,9 +15,16 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { Task } from './entities/task.entity';
 import { TaskUser } from './entities/task-user.entity';
-import { State } from 'src/enum/state.enum';
+import { StateEnum } from 'src/enum/state.enum';
+import { ProjectByUserDto } from './dto/project-by-user.dto';
+import { UserWithRoleDto } from './dto/user-with-role.dto';
+import { TaskResponseDto, AssignedUserDto } from './dto/task-response.dto';
+import { UpdateMemberProjectDto } from './dto/add-member.dto';
+import { UpdateTaskDto } from './dto/update-task.dto';
+
 @Injectable()
 export class ProjectsService {
+  private readonly logger = new Logger(ProjectsService.name);
   constructor(
     @Inject('ROLE_USER_PROJECT_REPOSITORY')
     private readonly roleUserProjectRepository: Repository<RoleUserProject>,
@@ -28,38 +41,47 @@ export class ProjectsService {
     return await this.projectRepository.findOne({ where: { id } });
   }
 
-  async findProjectByUserId(
-    userId: number,
-  ): Promise<{ project: Project; role: string[] }[] | null> {
+  async findProjectByUserId(userId: number): Promise<ProjectByUserDto[] | null> {
     const user = await this.userService.findOne(userId);
-    if (!user) throw NotFoundException;
+    if (!user) throw new NotFoundException('User not found');
+
     const roleUserProject = await this.roleUserProjectRepository.find({
       where: { user: user },
       relations: ['project', 'role'],
     });
-    return Object.values(
+
+    const projects = Object.values(
       roleUserProject.reduce(
         (acc, item) => {
-          const { id } = item.project;
+          const { id, name, description, startDate, endDate } = item.project;
           const roleName = item.role.name;
           if (!acc[id]) {
             // Nếu chưa có đối tượng với id này, tạo mới
-            acc[id] = { project: item.project, role: [] };
+            acc[id] = {
+              id,
+              name,
+              description,
+              startDate,
+              endDate,
+              roles: [],
+            };
           }
-          // Thêm role vào mảng role
-          acc[id].role.push(roleName);
+          // Thêm role vào mảng roles
+          acc[id].roles.push(roleName);
 
           return acc;
         },
-        {} as Record<number, { project: Project; role: string[] }>,
+        {} as Record<number, ProjectByUserDto>,
       ),
     );
+
+    return projects;
   }
 
   async findOneTask(id: number): Promise<Task | null> {
     return await this.taskRepository.findOne({
       where: { id },
-      relations: ['taskUsers', 'taskUsers.user', 'createdBy'],
+      relations: ['taskUsers.user', 'createdBy'],
     });
   }
 
@@ -72,22 +94,28 @@ export class ProjectsService {
     });
   }
 
-  async addUserProject(
+  async updateUserProject(
     projectId: number,
-    email: string,
-    rolename: string,
-  ): Promise<RoleUserProject | null> {
-    const newRoleUserProject = new RoleUserProject();
+    updateMemberProject: UpdateMemberProjectDto[],
+  ): Promise<boolean> {
     const project = await this.findOneProject(projectId);
-    const user = await this.userService.findByEmail(email);
-    const role = await this.userService.findRole(rolename);
+    const user = await this.userService.findByEmails(updateMemberProject.map((item) => item.email));
+    const role = await this.userService.findRole(updateMemberProject.map((item) => item.roleName));
+    this.logger.log(user);
+    this.logger.log(role);
     if (!project) throw NotFoundException;
     if (!user) throw NotFoundException;
     if (!role) throw NotFoundException;
-    newRoleUserProject.project = project;
-    newRoleUserProject.user = user;
-    newRoleUserProject.role = role;
-    return await this.roleUserProjectRepository.save(newRoleUserProject);
+    await this.roleUserProjectRepository.delete({ project: project });
+    for (let i = 0; i < updateMemberProject.length; i++) {
+      const newRoleUserProject = new RoleUserProject();
+      newRoleUserProject.project = project;
+      newRoleUserProject.user = user[i];
+      newRoleUserProject.role = role[i];
+      await this.roleUserProjectRepository.save(newRoleUserProject);
+      this.logger.log(newRoleUserProject);
+    }
+    return true;
   }
 
   async createProject(project: CreateProjectDto, userId: number): Promise<Project | null> {
@@ -99,8 +127,10 @@ export class ProjectsService {
     const user = await this.userService.findOne(userId);
     if (!user) throw UnauthorizedException;
     await this.projectRepository.save(newProject);
-    await this.addUserProject(newProject.id, user.email, RoleEnum.Admin);
-    await this.addUserProject(newProject.id, user.email, RoleEnum.User);
+    await this.updateUserProject(newProject.id, [
+      { email: user.email, roleName: RoleEnum.Admin },
+      { email: user.email, roleName: RoleEnum.User },
+    ]);
     return newProject;
   }
 
@@ -111,7 +141,7 @@ export class ProjectsService {
     if (!user) throw UnauthorizedException;
     if (!project) throw NotFoundException;
     newTask.createdBy = user;
-    newTask.state = State.Start;
+    newTask.state = StateEnum.NotDone;
     newTask.deadline = task.deadline;
     newTask.doneAt = task.deadline;
     newTask.priority = task.priority;
@@ -122,49 +152,60 @@ export class ProjectsService {
     return await this.taskRepository.save(newTask);
   }
 
-  async assignTask(taskId: number, email: string): Promise<TaskUser | null> {
+  async assignTask(taskId: number, emails: string[]): Promise<TaskUser[] | null> {
     const task = await this.findOneTask(taskId);
-    const user = await this.userService.findByEmail(email);
+    const users = await this.userService.findByEmails(emails);
     if (!task) throw NotFoundException;
-    if (!user) throw UnauthorizedException;
-    const taskUser = new TaskUser();
-    taskUser.task = task;
-    taskUser.user = user;
-    taskUser.assignTime = new Date();
-    const checkedTaskUser = await this.taskUserRespotiry.findOne({
-      where: { task: task, user: user },
+    if (!users) throw UnauthorizedException;
+    const oldTaskUsers = await this.taskUserRespotiry.find({
+      where: { task: task },
     });
-    if (!checkedTaskUser) return await this.taskUserRespotiry.save(taskUser);
-    else {
-      return await this.taskUserRespotiry.remove(checkedTaskUser);
+    if (oldTaskUsers) await this.taskUserRespotiry.remove(oldTaskUsers);
+    const taskUsers: TaskUser[] = [];
+    for (const user of users) {
+      const taskUser = new TaskUser();
+      taskUser.task = task;
+      taskUser.user = user;
+      taskUser.assignTime = new Date();
+      taskUsers.push(taskUser);
     }
+    return await this.taskUserRespotiry.save(taskUsers);
   }
 
-  async findUserByProject(projectId: number): Promise<{ user: User; role: string[] }[] | null> {
+  async findUserByProject(projectId: number): Promise<UserWithRoleDto[] | null> {
     const project = await this.findOneProject(projectId);
+    if (!project) throw new NotFoundException('Project not found');
+
     const userList = await this.roleUserProjectRepository.find({
-      where: { project: project as Project },
+      where: { project: project },
       relations: ['user', 'role'],
     });
-    return Object.values(
+
+    const users = Object.values(
       userList.reduce(
         (acc, item) => {
-          const userId = item.user.id;
+          const { id, name, email } = item.user;
           const roleName = item.role.name;
 
-          if (!acc[userId]) {
-            // Nếu chưa có đối tượng với userId này, tạo mới
-            acc[userId] = { user: item.user, role: [] };
+          if (!acc[id]) {
+            // Nếu chưa có đối tượng với id này, tạo mới
+            acc[id] = {
+              id,
+              name,
+              email,
+              roles: [],
+            };
           }
-
-          // Thêm role vào mảng role
-          acc[userId].role.push(roleName);
+          // Thêm role vào mảng roles
+          acc[id].roles.push(roleName);
 
           return acc;
         },
-        {} as Record<number, { user: User; role: string[] }>,
+        {} as Record<number, UserWithRoleDto>,
       ),
     );
+
+    return users;
   }
 
   async updateProject(
@@ -179,24 +220,75 @@ export class ProjectsService {
 
   async updateTask(
     taskId: number,
-    updateData: Partial<CreateTaskDto>,
-    isAdmin: boolean,
+    updateData: UpdateTaskDto,
     userId: number,
   ): Promise<Task | null> {
     const task = await this.findOneTask(taskId);
-    if (!task) throw NotFoundException;
-    if (!isAdmin && task.createdBy.id !== userId) throw UnauthorizedException;
-    // Cập nhật thông tin task
+    const user = await this.userService.findOne(userId);
+    const taskUser = await this.taskUserRespotiry.findOne({
+      where: { task: task as Task, user: user as User },
+    });
+    if (!taskUser) throw UnauthorizedException;
+    if (!task) throw NotFoundException; // Cập nhật thông tin task
     Object.assign(task, updateData);
     return await this.taskRepository.save(task);
   }
 
-  async findTasksByProjectId(projectId: number): Promise<Task[] | null> {
+  async findTasksByProjectId(projectId: number): Promise<TaskResponseDto[] | null> {
     const project = await this.findOneProject(projectId);
-    if (!project) throw NotFoundException;
-    return await this.taskRepository.find({
+    if (!project) throw new NotFoundException('Project not found');
+
+    const tasks = await this.taskRepository.find({
       where: { project: project },
       relations: ['createdBy', 'taskUsers', 'taskUsers.user'],
     });
+
+    const taskMap = new Map<number, TaskResponseDto>();
+
+    tasks.forEach((task) => {
+      if (!taskMap.has(task.id)) {
+        taskMap.set(task.id, {
+          id: task.id,
+          taskName: task.taskName,
+          description: task.description,
+          createdTime: task.createdTime,
+          deadline: task.deadline,
+          doneAt: task.doneAt,
+          priority: task.priority,
+          state: task.state,
+          createdBy: {
+            id: task.createdBy.id,
+            name: task.createdBy.name,
+            email: task.createdBy.email,
+          },
+          assignedUsers: [],
+        });
+      }
+
+      const taskDto = taskMap.get(task.id);
+      task.taskUsers.forEach((taskUser) => {
+        const assignedUser: AssignedUserDto = {
+          id: taskUser.user.id,
+          name: taskUser.user.name,
+          email: taskUser.user.email,
+          assignedTime: taskUser.assignTime,
+        };
+        taskDto?.assignedUsers.push(assignedUser);
+      });
+    });
+
+    return Array.from(taskMap.values());
+  }
+
+  async deleteTask(taskId: number): Promise<void> {
+    const task = await this.taskRepository.findOne({ where: { id: taskId } });
+    if (!task) throw new NotFoundException('Task not found');
+    await this.taskRepository.remove(task);
+  }
+
+  async deleteProject(projectId: number): Promise<void> {
+    const project = await this.projectRepository.findOne({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found');
+    await this.projectRepository.remove(project);
   }
 }

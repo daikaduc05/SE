@@ -44,8 +44,12 @@ export class AuthenticateGuard implements CanActivate {
       if (!roleUserProject) return false;
       for (const item of roleUserProject) {
         this.logger.log(item.role.name);
-        if (requiredRole.includes(item.role.name)) return true;
+        if (requiredRole.includes(item.role.name)) {
+          this.logger.log('Success');
+          return true;
+        }
       }
+      this.logger.log('Failed');
       return false;
     } catch (error) {
       console.log(error);

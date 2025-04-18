@@ -8,12 +8,12 @@ import { Project } from './project.entity';
 export class RoleUserProject {
   @PrimaryGeneratedColumn()
   id: number;
-  @ManyToOne(() => User, (user) => user.roleUserProjects)
+  @ManyToOne(() => User, (user) => user.roleUserProjects, { onDelete: 'CASCADE' })
   user: User;
 
-  @ManyToOne(() => Role, (role) => role.roleUserProjects)
+  @ManyToOne(() => Role, (role) => role.roleUserProjects, { onDelete: 'CASCADE' })
   role: Role;
 
-  @ManyToOne(() => Project, (project) => project.roleUserProjects)
+  @ManyToOne(() => Project, (project) => project.roleUserProjects, { onDelete: 'CASCADE' })
   project: Project;
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
-export class AddMember {
+export class UpdateMemberProjectDto {
   @ApiProperty()
   @IsNotEmpty()
   roleName: string;
@@ -8,4 +8,10 @@ export class AddMember {
   @ApiProperty()
   @IsNotEmpty()
   email: string;
+}
+
+export class UpdateMemberProjectDtoRequest {
+  @ApiProperty({ type: [UpdateMemberProjectDto] })
+  @IsNotEmpty()
+  membersList: UpdateMemberProjectDto[];
 }

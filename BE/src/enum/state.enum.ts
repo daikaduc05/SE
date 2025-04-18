@@ -1,5 +1,4 @@
-export enum State {
-  Start = 'start',
-  InProcessing = 'in processing',
-  Done = 'done',
+export enum StateEnum {
+  Done = 'Done',
+  NotDone = 'Not Done',
 }

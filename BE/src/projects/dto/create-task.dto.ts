@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty } from 'class-validator';
-import { Priority } from 'src/enum/priority.enum';
+import { PriorityEnum } from 'src/enum/priority.enum';
 export class CreateTaskDto {
   @ApiProperty()
   @IsNotEmpty()
@@ -12,7 +12,7 @@ export class CreateTaskDto {
 
   @ApiProperty()
   @IsNotEmpty()
-  priority: Priority;
+  priority: PriorityEnum;
 
   @ApiProperty()
   @IsNotEmpty()

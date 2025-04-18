@@ -29,12 +29,12 @@ export class Task {
   @Column({ name: 'done_at' })
   doneAt: Date;
 
-  @ManyToOne(() => Project, (project) => project.tasks)
+  @ManyToOne(() => Project, (project) => project.tasks, { onDelete: 'CASCADE' })
   project: Project;
 
   @OneToMany(() => TaskUser, (taskUser) => taskUser.task)
   taskUsers: TaskUser[];
 
-  @ManyToOne(() => User, (user) => user.taskCreated)
+  @ManyToOne(() => User, (user) => user.taskCreated, { onDelete: 'CASCADE' })
   createdBy: User;
 }

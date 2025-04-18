@@ -1,6 +1,6 @@
-import { Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { UseGuards } from '@nestjs/common';
 import { AuthenticateGuard } from 'src/users/authenticate/authenticate.guard';
 import { Roles } from 'src/role/role.decorator';
@@ -8,10 +8,10 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { CustomRequest } from 'src/custom-interface';
 import { Request } from '@nestjs/common';
 import { Body } from '@nestjs/common';
-import { AddMember } from './dto/add-member.dto';
+import { UpdateMemberProjectDtoRequest } from './dto/add-member.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { RoleEnum } from 'src/enum/role.enum';
-import { AssignTask } from './dto/assign-task.dto';
+import { AssignTaskDto } from './dto/assign-task.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { Logger } from '@nestjs/common';
@@ -19,6 +19,7 @@ import { Logger } from '@nestjs/common';
 export class ProjectsController {
   private readonly logger: Logger = new Logger(ProjectsController.name);
   constructor(private readonly projectsService: ProjectsService) {}
+
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Post('/')
@@ -30,10 +31,15 @@ export class ProjectsController {
   @Roles(RoleEnum.Admin)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Post('/:projectId/members/')
-  async addMember(@Param('projectId') projectId: number, @Body() body: AddMember) {
-    this.logger.log('[Start Controller] addMember');
-    return await this.projectsService.addUserProject(projectId, body.email, body.roleName);
+  @Put('/:projectId/members/')
+  @ApiBody({ type: UpdateMemberProjectDtoRequest })
+  async updateMemberToProject(
+    @Param('projectId') projectId: number,
+    @Body() body: UpdateMemberProjectDtoRequest,
+  ) {
+    this.logger.log('[Start Controller] updateMemberToProject');
+    this.logger.log(body);
+    return await this.projectsService.updateUserProject(projectId, body.membersList);
   }
 
   @Roles(RoleEnum.Admin, RoleEnum.User)
@@ -65,10 +71,10 @@ export class ProjectsController {
   async assignTask(
     @Param('projectId') projectId: number,
     @Param('taskId') taskId: number,
-    @Body() body: AssignTask,
+    @Body() body: AssignTaskDto,
   ) {
     this.logger.log('[Start Controller] assignTask');
-    return await this.projectsService.assignTask(taskId, body.email);
+    return await this.projectsService.assignTask(taskId, body.emails);
   }
 
   @Roles(RoleEnum.User, RoleEnum.Admin)
@@ -100,12 +106,7 @@ export class ProjectsController {
     @Request() req: CustomRequest,
   ) {
     this.logger.log('[Start Controller] updateTask');
-    return await this.projectsService.updateTask(
-      taskId,
-      updateData,
-      req.isAdmin as boolean,
-      req.userId,
-    );
+    return await this.projectsService.updateTask(taskId, updateData, req.userId);
   }
 
   @ApiBearerAuth('access-token')
@@ -125,12 +126,33 @@ export class ProjectsController {
     return await this.projectsService.findOneProject(projectId);
   }
 
-  @Roles(RoleEnum.User)
+  @Roles(RoleEnum.User, RoleEnum.Admin)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Get('/:projectId/tasks')
   async listTasksByProject(@Param('projectId') projectId: number) {
     this.logger.log('[Start Controller] listTasksByProject');
     return await this.projectsService.findTasksByProjectId(projectId);
+  }
+
+  @Roles(RoleEnum.Admin)
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Delete('/:projectId/tasks/:taskId')
+  async deleteTask(@Param('taskId') taskId: number, @Param('projectId') projectId: number) {
+    this.logger.log('[Start Controller] deleteTask');
+    console.log(taskId, projectId);
+    await this.projectsService.deleteTask(taskId);
+    return { message: 'Task deleted successfully' };
+  }
+
+  @Roles(RoleEnum.Admin)
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Delete('/:projectId')
+  async deleteProject(@Param('projectId') projectId: number) {
+    this.logger.log('[Start Controller] deleteProject');
+    await this.projectsService.deleteProject(projectId);
+    return { message: 'Project deleted successfully' };
   }
 }
