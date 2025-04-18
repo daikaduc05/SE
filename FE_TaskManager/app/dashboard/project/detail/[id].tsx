@@ -1,118 +1,168 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import {
+  ScrollView,
+  Text,
+  ToastAndroid,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { AntDesign, FontAwesome6, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import BackButton from "@/common/BackButton";
 import { router, useLocalSearchParams } from "expo-router";
+import dayjs from "dayjs";
+import axios from "axios";
+import * as SecureStore from "expo-secure-store";
+import BackButton from "@/common/BackButton";
+import { IProjects_Detail, IProjects_member } from "@/model/IProjects";
+import { IAddUser } from "@/model/IUser";
 
-// Bạn có thể thay đổi mảng email ở đây
-const emailList = ["duecgay1@gmail.com", "taismiez@gmail.com"];
+// Dummy member list (thay bằng API nếu cần)
 
 const DetailProject = () => {
-  // Các thông tin sự kiện
   const { id } = useLocalSearchParams();
-  const projectName = "Tam thai tu team";
-  const startTime = "24/3/2025";
-  const endTime = "25/3/2025";
-  const description =
-    "This project focuses on developing an innovative solution to optimize internal workflows and enhance team performance. Through needs analysis, technical proposals, and thorough planning, it aims to deliver sustainable value while strengthening professional skills and fostering a collaborative spirit among team members.";
+  const [projectDetailt, setProjectDetailt] = useState<IProjects_Detail>();
+  const [emailList, setEmailList] = useState<IProjects_member[]>([]);
+
+  useEffect(() => {
+    const fetchProjectDetail = async () => {
+      try {
+        const res = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${await SecureStore.getItemAsync(
+                "token"
+              )}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setProjectDetailt(res.data);
+        const emails = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}/members`,
+          {
+            headers: {
+              Authorization: `Bearer ${await SecureStore.getItemAsync(
+                "token"
+              )}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        setEmailList(emails.data);
+        console.log("Project members:", emailList);
+      } catch (error) {
+        ToastAndroid.show(
+          "Error fetching project details. Please try again later.",
+          ToastAndroid.SHORT
+        );
+        console.log("Error fetching project details:", error);
+      }
+    };
+    fetchProjectDetail();
+  }, []);
+
+  const renderDateCard = (label: string, date: string) => (
+    <View className="bg-[#353A70] rounded-xl px-4 py-3 mb-4 flex-row justify-between items-center">
+      <Text className="text-white text-base font-semibold">{label}</Text>
+      <View className="flex-row items-center gap-2">
+        <Ionicons name="calendar-outline" size={18} color="white" />
+        <Text className="text-white text-sm">
+          {dayjs(date).format("YYYY-MM-DD")}
+        </Text>
+      </View>
+    </View>
+  );
 
   return (
-    <LinearGradient colors={["#252850", "#252850"]} className="flex-1 pb-10">
-      {/* Nút quay lại */}
+    <LinearGradient colors={["#252850", "#252850"]} className="flex-1">
       <BackButton />
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        className="bg-[#1D2760] pb-20"
-      >
-        {/* Nội dung chính */}
-        <View className="flex-1 pt-10  mt-4 px-5">
-          {/* Tiêu đề */}
+      <ScrollView className="flex-1 px-5 pt-4 pb-10 mt-16">
+        {/* Tiêu đề */}
+        <View className="items-center mb-6">
+          <Text className="text-white text-2xl font-bold tracking-wide">
+            {projectDetailt?.name}
+          </Text>
+          <View className="h-[2px] w-16 bg-white mt-2 rounded-full" />
+        </View>
 
-          {/* Tên event có gạch ngang hai bên */}
-          <View className="flex-row justify-between w-full items-center mb-5">
-            <View className="h-1 bg-white w-[20%]" />
-            <Text className="text-white bg-[#5C5ADB] rounded-full text-xl font-bold px-4 py-2 mx-2">
-              {projectName}
-            </Text>
-            <View className="h-1 bg-white w-[20%]" />
+        {/* Thời gian bắt đầu & kết thúc */}
+        {renderDateCard(
+          "Beginning of Event",
+          dayjs(projectDetailt?.startDate).toISOString() ?? ""
+        )}
+        {renderDateCard(
+          "Completion Date",
+          dayjs(projectDetailt?.endDate).toISOString() ?? ""
+        )}
+
+        {/* Danh sách thành viên */}
+        <View className="mb-6 mt-4">
+          <View className="flex-row items-center gap-2 mb-2">
+            <FontAwesome6 name="people-group" size={20} color="white" />
+            <Text className="text-white text-base font-semibold">Members</Text>
           </View>
+          <View className="flex-col gap-3">
+            {emailList.map((user) => (
+              <View
+                key={user.email}
+                className="bg-white rounded-xl p-4 flex-row justify-between items-center shadow-sm border border-gray-200"
+              >
+                <Text className="text-base font-semibold text-black">
+                  {user.email}
+                </Text>
 
-          {/* Thời gian bắt đầu */}
-          <View className="flex-row bg-[#5C5ADB] rounded-full justify-between items-center mb-3 p-2 px-4 mt-2">
-            <Text className="text-white rounded-full text-lg font-bold py-2">
-              Beginning of Event
-            </Text>
-            <View className="flex-row items-center">
-              <Ionicons name="calendar-outline" size={16} color="white" />
-              <Text className="text-white pl-2">{startTime}</Text>
-            </View>
-          </View>
-
-          {/* Thời gian kết thúc */}
-          <View className="flex-row bg-[#5C5ADB] rounded-full justify-between items-center mb-5 p-2 px-4">
-            <Text className="text-white rounded-full text-lg font-bold py-2">
-              Completion date
-            </Text>
-            <View className="flex-row items-center">
-              <Ionicons name="calendar-outline" size={16} color="white" />
-              <Text className="text-white pl-2">{endTime}</Text>
-            </View>
-          </View>
-
-          {/* Danh sách thành viên */}
-          <View className="mb-5 mt-4">
-            <View className="flex-row items-start gap-2">
-              <Text className="text-white text-lg flex-row items-center gap-2 font-semibold mb-2">
-                Member's list
-              </Text>
-              <FontAwesome6 name="people-group" size={24} color="white" />
-            </View>
-            <View className="flex-col mt-2 gap-4 items-start">
-              {emailList.map((item, index) => (
-                <View
-                  key={index}
-                  className="flex-row justify-between items-center"
-                >
-                  <Text className="text-white bg-[#5C5ADB] rounded-full text-lg font-bold px-4 py-2">
-                    {item}
-                  </Text>
+                <View className="flex-row flex-wrap mt-2 gap-2">
+                  {user.roles.map((role) => (
+                    <View
+                      key={role}
+                      className={`rounded-full px-3 py-1 ${
+                        role.toLowerCase().includes("admin")
+                          ? "bg-red-500"
+                          : "bg-blue-500"
+                      }`}
+                    >
+                      <Text className="text-white text-sm font-semibold">
+                        {role.toUpperCase()}
+                      </Text>
+                    </View>
+                  ))}
                 </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Mô tả sự kiện */}
-          <View className="mb-5">
-            <Text className="text-white text-lg font-semibold mb-2">
-              Event's description
-            </Text>
-            <Text className="text-white p-4 bg-[#5C5ADB] rounded-lg text-lg">
-              {description}
-            </Text>
-          </View>
-
-          {/* Nút chỉnh sửa */}
-          <View className="flex-row items-center justify-between mt-4 px-2">
-            <TouchableOpacity
-              className="flex-row items-start justify-center bg-[#5f5f5f] rounded-full px-4 py-2 gap-2 mt-4"
-              onPress={() => router.back()}
-            >
-              <AntDesign name="back" size={24} color="white" />
-              <Text className="text-white text-lg font-semibold mb-2">
-                Back
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="flex-row items-center justify-center bg-[#F39C12] rounded-full px-4 py-4 mt-4 "
-              onPress={() => router.push(`/dashboard/project/edit/${id}`)}
-            >
-              <AntDesign name="edit" size={24} color="white" />
-              <Text className="text-white text-lg font-bold ml-2">Edit</Text>
-            </TouchableOpacity>
+              </View>
+            ))}
           </View>
         </View>
+
+        {/* Mô tả */}
+        <View className="mb-6">
+          <Text className="text-white text-base font-semibold mb-2">
+            Event's Description
+          </Text>
+          <Text className="bg-[#353A70] text-white p-4 rounded-xl text-sm leading-relaxed">
+            {projectDetailt?.description || "No description"}
+          </Text>
+        </View>
       </ScrollView>
+
+      {/* Nút hành động */}
+      <View className="flex-row justify-between items-center px-6 pb-6">
+        <TouchableOpacity
+          className="flex-row items-center bg-gray-600 rounded-full px-4 py-2 gap-2"
+          onPress={() => router.back()}
+        >
+          <Ionicons name="arrow-back" size={20} color="white" />
+          <Text className="text-white font-medium">Back</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          className="flex-row items-center bg-[#F39C12] rounded-full px-4 py-2 gap-2"
+          onPress={() => router.push(`/dashboard/project/edit/${id}`)}
+        >
+          <AntDesign name="edit" size={20} color="white" />
+          <Text className="text-white font-bold">Edit</Text>
+        </TouchableOpacity>
+      </View>
     </LinearGradient>
   );
 };

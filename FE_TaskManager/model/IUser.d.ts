@@ -1,10 +1,11 @@
 export interface IUser {
-    username: string;
+    id: string;
     avatar: string;
+    name: string;
     email: string;
     password: string;
-    noti_setting: boolean;
-    is_banned: boolean;
+    notiSettings: boolean;
+    isBanned: boolean;
 }
 
 
@@ -13,5 +14,17 @@ export interface IUser_noti {
    noti_id: string;
    is_read: boolean;
 }
+const enum ERoleUser {
+    ADMIN = "admin",
+    MEMBER = "user",
+}
+
+
+export interface IAddUser{
+    roleName: string[];
+    email: string;
+}
+
+
 
 

@@ -1,6 +1,7 @@
 import BackButton from "@/common/BackButton";
 import CalendarPicker from "@/common/CalenderHeader";
 import { Entypo, Ionicons } from "@expo/vector-icons";
+import axios from "axios";
 import dayjs from "dayjs";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,39 +14,80 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import * as SecureStore from "expo-secure-store";
+import { IProjects_member } from "@/model/IProjects";
 
-const email = ["nguyenha@gmail.com", "duc@gmail.com", "ducgay@gmail.com"];
 const priority = ["Medium", "Important", "Warning"];
 
 const EditTask = () => {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams() as { id: string };
+  const { project } = useLocalSearchParams() as { project: string };
+
   const [taskName, setTaskName] = useState<string>("");
-  const [startDate, setStartDate] = useState<string>(dayjs().format("YYYY-MM-DD"));
+  const [startDate, setStartDate] = useState<string>(
+    dayjs().format("YYYY-MM-DD")
+  );
   const [endDate, setEndDate] = useState<string>(dayjs().format("YYYY-MM-DD"));
-  const [projectMembers, setProjectMembers] = useState<string[]>(email);
+  const [projectMembers, setProjectMembers] = useState<string[]>([]);
   const [memberTask, setMemberTask] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [prioritySelect, setPrioritySelect] = useState("");
   const [description, setDescription] = useState<string>("");
 
   useEffect(() => {
-    // Fetch the task details by ID here (e.g., from an API or local data)
-    // For now, we will simulate fetching task data
-    const taskData = {
-      taskName: "Sample Task",
-      startDate: "2025-05-01",
-      endDate: "2025-05-10",
-      prioritySelect: "Medium",
-      memberTask: ["nguyenha@gmail.com", "duc@gmail.com"],
-      description: "This is a sample description for the task.",
+    console.log("project id:", project);
+    console.log("id", id);
+    console.log("memebers", memberTask);
+  }, [memberTask]);
+
+  useEffect(() => {
+    const taskDetail = async () => {
+      const token = (await SecureStore.getItemAsync("token")) as string;
+      try {
+        const res = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (res) {
+          setTaskName(res.data.taskName);
+          setStartDate(res.data.createdTime);
+          setEndDate(res.data.deadline);
+          setPrioritySelect(res.data.priority);
+          setMemberTask(
+            res.data.taskUsers.map(
+              (item: { user: { email: string } }) => item.user.email
+            )
+          );
+          setDescription(res.data.description);
+          const emails = res.data.taskUsers.map((item: any) => {
+            return item.user.email;
+          });
+          setMemberTask(emails);
+        }
+        const emails = await axios.get(
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/members`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Project members:", emails.data);
+        const email = emails.data.map((item: IProjects_member) => item.email);
+        // console.log("Project members:", res.data);
+        setProjectMembers(email);
+      } catch (error) {
+        console.error("Error fetching task data:", error);
+      }
     };
-    setTaskName(taskData.taskName);
-    setStartDate(taskData.startDate);
-    setEndDate(taskData.endDate);
-    setPrioritySelect(taskData.prioritySelect);
-    setMemberTask(taskData.memberTask);
-    setDescription(taskData.description);
-  }, [id]);
+    taskDetail();
+  }, []);
 
   const handleSelectMember = (member: string) => {
     if (memberTask.includes(member)) {
@@ -55,29 +97,68 @@ const EditTask = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    const token = (await SecureStore.getItemAsync("token")) as string;
     if (
       taskName === "" ||
       description === "" ||
-      memberTask.length === 0 ||
       prioritySelect === "" ||
+      memberTask.length === 0 ||
       startDate === "" ||
       endDate === ""
     ) {
       ToastAndroid.show("Please fill all fields", ToastAndroid.SHORT);
     } else {
       // Handle task update logic here
-      console.log("Task updated:", {
-        id,
-        taskName,
-        startDate,
-        endDate,
-        prioritySelect,
-        memberTask,
-        description,
-      });
-      ToastAndroid.show("Task updated successfully", ToastAndroid.SHORT);
-      router.back();
+
+      try {
+        const member = await axios.put(
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}/assign`,
+          {
+            emails: memberTask,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const res = await axios.put(
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`,
+          {
+            description: description,
+            deadline: dayjs(endDate).toISOString(),
+            state: "Not Done",
+            priority: prioritySelect,
+            taskName: taskName,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+       
+        if (member&&res ) {
+          ToastAndroid.show("Task updated successfully", ToastAndroid.SHORT);
+          router.replace({
+            pathname: `/dashboard/project/[project]`,
+            params: {
+              project: project,
+              refresh: "true",
+            },
+          });
+        }
+      } catch (error) {
+        console.error(
+          "Error updating task:",
+          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`
+        );
+      }
     }
   };
 
@@ -194,34 +275,52 @@ const EditTask = () => {
                 }`
               : " No members selected"}
           </Text>
-
-          <ScrollView contentContainerStyle={{ paddingBottom: 16 }} className="h-[170px]">
-            <View className="flex-col gap-4">
-              {projectMembers.map((item, index) => {
-                const isSelected = memberTask.includes(item);
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    onPress={() => handleSelectMember(item)}
-                    className={`flex-row items-center justify-between px-4 py-3 rounded-xl ${
-                      isSelected ? "bg-[#3B41A1]" : "bg-[#262A6A]"
-                    }`}
-                  >
-                    <Text
-                      className={`text-white text-base font-medium ${isSelected ? "underline" : ""}`}
+          <View style={{ maxHeight: 170, overflow: "hidden" }}>
+            <ScrollView
+              contentContainerStyle={{ paddingBottom: 16 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={{ gap: 16 }}>
+                {projectMembers.map((item, index) => {
+                  const isSelected = memberTask.includes(item);
+                  return (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => handleSelectMember(item)}
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        paddingHorizontal: 16,
+                        paddingVertical: 12,
+                        borderRadius: 12,
+                        backgroundColor: isSelected ? "#3B41A1" : "#262A6A",
+                      }}
                     >
-                      {item}
-                    </Text>
-                    {isSelected ? (
-                      <Ionicons name="checkmark-circle" size={24} color="#4FD1C5" />
-                    ) : (
-                      <Entypo name="circle" size={24} color="#8895FF" />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </ScrollView>
+                      <Text
+                        style={{
+                          color: "white",
+                          fontSize: 16,
+                          fontWeight: "500",
+                          textDecorationLine: isSelected ? "underline" : "none",
+                        }}
+                      >
+                        {item}
+                      </Text>
+                      {isSelected ? (
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={24}
+                          color="#4FD1C5"
+                        />
+                      ) : (
+                        <Entypo name="circle" size={24} color="#8895FF" />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </ScrollView>
+          </View>
         </View>
         <View className="flex-col justify-between mt-8 gap-3">
           <Text className="text-white text-center bg-[#313384] w-fit p-2 px-4 rounded-full text-lg mb-2">
@@ -238,12 +337,18 @@ const EditTask = () => {
           />
         </View>
         <View className="flex-row justify-between gap-4 mt-2 mb-10 pb-5 mx-2">
-          <TouchableOpacity onPress={()=>router.back()} className="bg-[#E26D90] py-3 px-4 rounded-full mt-6">
+          <TouchableOpacity
+            onPress={() => router.back()}
+            className="bg-[#E26D90] py-3 px-4 rounded-full mt-6"
+          >
             <Text className="text-white text-center font-bold text-lg">
               Cancel
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSubmit} className="bg-[#8D8CC3] py-3 px-4 rounded-full mt-6">
+          <TouchableOpacity
+            onPress={handleSubmit}
+            className="bg-[#8D8CC3] py-3 px-4 rounded-full mt-6"
+          >
             <Text className="text-white text-center font-bold text-lg">
               Save Changes
             </Text>

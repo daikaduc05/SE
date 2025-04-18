@@ -40,6 +40,7 @@
       "typedRoutes": true
     },
     "extra": {
+      "JWT_SECRET": "2d398f94e0194db2a0e23c8b1bc2b86524ff92c7a33cbf1d0910dbb95d15d8cb",
       "router": {
         "origin": false
       },

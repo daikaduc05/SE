@@ -22,18 +22,19 @@ const Signup = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
+    useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false); // Thêm state để theo dõi bàn phím
   const [message, setMessage] = useState("");
 
   // Theo dõi sự kiện hiển thị/ẩn bàn phím
   React.useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
+      "keyboardDidShow",
       () => setKeyboardVisible(true)
     );
     const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
+      "keyboardDidHide",
       () => setKeyboardVisible(false)
     );
 
@@ -46,38 +47,55 @@ const Signup = () => {
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
       console.log("Password and confirm password do not match");
-    }
-    else if(fullName === "" || email === "" || password === "" || confirmPassword === ""){
+    } else if (
+      fullName === "" ||
+      email === "" ||
+      password === "" ||
+      confirmPassword === ""
+    ) {
       ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
-    }
-    else if(email.includes("@gmail.com") === false){
+    } else if (email.includes("@gmail.com") === false) {
       ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
-    }
-    else {
-      const res = await axios.post("http://192.168.141.97:3000//users/signup", {
-        name: fullName,
-        email: email,
-        password: password,
-      },{
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      if(res){
-        console.log(res.data);
-        setMessage("");
-        ToastAndroid.show("Sign up successfully", ToastAndroid.SHORT);
-        router.push("/login");
+    } else {
+      try {
+        const res = await axios.post(
+          `${process.env.EXPO_PUBLIC_API_URL}/users`,
+          {
+            name: fullName,
+            email: email,
+            password: password,
+          },
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (res) {
+          console.log(res.data);
+          setMessage("");
+          ToastAndroid.show(
+            "Sign up successfully, please sign in to continue",
+            ToastAndroid.SHORT
+          );
+          router.push("/login");
+        } else {
+          console.log("Sign up failed");
+          setMessage("Sign up failed, please try again later");
+        }
+      } catch (error) {
+        console.log("Error:", error);
+        setMessage("An error occurred, please try again later");
       }
     }
   };
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1"
     >
-      <ScrollView 
-        contentContainerStyle={{flexGrow: 1}}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         className="w-screen h-screen"
         showsVerticalScrollIndicator={false}
@@ -92,7 +110,11 @@ const Signup = () => {
             end={{ x: 0.5, y: 0 }}
           />
 
-          <View className={`${keyboardVisible ? 'h-[90%]' : 'h-[70%]'} bg-white w-full flex items-center rounded-tl-[100px] justify-start gap-5 absolute bottom-0 py-10`}>
+          <View
+            className={`${
+              keyboardVisible ? "h-[90%]" : "h-[70%]"
+            } bg-white w-full flex items-center rounded-tl-[100px] justify-start gap-5 absolute bottom-0 py-10`}
+          >
             <Text className="text-[28px] font-bold text-[#4737A5] tracking-[3px] mb-2">
               Create Account
             </Text>
@@ -143,7 +165,11 @@ const Signup = () => {
             <View className="w-full px-10 mt-5">
               <Text className="text-[#4737A5] text-center font-bold text-[14px]">
                 Already have an account?{" "}
-                <Link href="/login" onPress={() => setMessage("")} className="underline">
+                <Link
+                  href="/login"
+                  onPress={() => setMessage("")}
+                  className="underline"
+                >
                   Sign in
                 </Link>
               </Text>

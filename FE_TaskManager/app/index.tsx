@@ -2,6 +2,7 @@ import { Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import AuthenButton from "@/common/Button";
+import { useEffect } from "react";
 
 export default function Index() {
   // const width =  useSharedValue(100)
@@ -12,6 +13,14 @@ export default function Index() {
   const handleSignUp = () => {
     router.push("/signup");
   };
+
+  useEffect(() => {
+    console.log(process.env.EXPO_PUBLIC_API_URL)
+  
+  },[])
+
+
+  
   return (
     <View className="w-full h-full flex items-center justify-center ">
       <LinearGradient

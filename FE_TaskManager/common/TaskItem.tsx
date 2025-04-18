@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { ITaskFull } from "@/model/ITask";
 import React, { useRef } from "react";
 import {
   View,
@@ -9,14 +9,25 @@ import {
   TouchableOpacity,
 } from "react-native";
 
-const TaskItem = ({ task, onToggle }: { task: any; onToggle: any }) => {
+const TaskItem = ({
+  task,
+  onToggle,
+  setIsVisible,
+  setTaskId,
+  onEdit,
+}: {
+  task: ITaskFull;
+  onToggle: (id: string) => void;
+  setIsVisible: (visible: boolean) => void;
+  setTaskId: (id: string) => void;
+  onEdit: (id: string) => void;
+}) => {
   const pan = useRef(new Animated.ValueXY()).current;
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-
       onPanResponderMove: Animated.event([null, { dx: pan.x }], {
         useNativeDriver: false,
       }),
@@ -33,6 +44,19 @@ const TaskItem = ({ task, onToggle }: { task: any; onToggle: any }) => {
     })
   ).current;
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority.toLowerCase()) {
+      case "medium":
+        return "#22c55e"; // green
+      case "important":
+        return "#facc15"; // yellow
+      case "warning":
+        return "#ef4444"; // red
+      default:
+        return "#d1d5db"; // gray fallback
+    }
+  };
+
   return (
     <Animated.View
       {...panResponder.panHandlers}
@@ -43,12 +67,10 @@ const TaskItem = ({ task, onToggle }: { task: any; onToggle: any }) => {
         },
       ]}
     >
-      <View>
-        <TouchableOpacity
-          onPress={() => router.push(`/dashboard/project/task/${task.id}]`)}
-          style={styles.contentWrapper}
-        >
-          <Text style={styles.taskName}>{task.task_name}</Text>
+      <View style={styles.contentWrapper}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.taskName}>{task.taskName}</Text>
+
           <View
             style={[
               styles.stateContainer,
@@ -56,14 +78,50 @@ const TaskItem = ({ task, onToggle }: { task: any; onToggle: any }) => {
             ]}
           >
             <Text
-              style={[
-                task.state === "Done" ? styles.doneText : styles.notDoneText,
-              ]}
+              style={
+                task.state === "Done" ? styles.doneText : styles.notDoneText
+              }
             >
               {task.state}
             </Text>
+            {task.state === "Done" && task.doneAt && (
+              <Text style={styles.doneAt}>
+                {new Date(task.doneAt).toLocaleDateString()}
+              </Text>
+            )}
           </View>
-        </TouchableOpacity>
+
+          <View style={styles.priorityWrapper}>
+            <View
+              style={[
+                styles.priorityDot,
+                { backgroundColor: getPriorityColor(task.priority) },
+              ]}
+            />
+            <Text style={styles.priorityText}>{task.priority}</Text>
+          </View>
+        </View>
+
+        <View className="w-[50px] flex-col justify-evenly gap-6" style={styles.actions}>
+          <TouchableOpacity 
+          className="w-full"
+            style={[styles.actionBtn, { backgroundColor: "#3B82F6" }]}
+            onPress={() => onEdit(task.id)}
+          >
+            <Text className="text-center" style={styles.actionText}>Edit</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+          className="w-full"
+            style={[styles.actionBtn, { backgroundColor: "#DC2626" }]}
+            onPress={() => {
+              setIsVisible(true);
+              setTaskId(task.id);
+            }}
+          >
+            <Text style={styles.actionText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </Animated.View>
   );
@@ -75,20 +133,36 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
   },
   contentWrapper: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
   },
   taskName: {
     color: "#1D2760",
-    fontWeight: "500",
+    fontWeight: "600",
+    fontSize: 16,
+    marginBottom: 8,
   },
   stateContainer: {
-    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 9999,
+    marginBottom: 8,
+  },
+  doneAt: {
+    color: "#9CA3AF",
+    fontSize: 12,
+    marginLeft: 6,
   },
   doneState: {
     backgroundColor: "#dcfce7",
@@ -98,9 +172,43 @@ const styles = StyleSheet.create({
   },
   doneText: {
     color: "#16a34a",
+    fontWeight: "600",
   },
   notDoneText: {
     color: "#dc2626",
+    fontWeight: "600",
+  },
+  priorityWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  priorityDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 9999,
+  },
+  priorityText: {
+    fontSize: 14,
+    color: "#1F2937",
+    fontWeight: "500",
+    textTransform: "capitalize",
+  },
+  actions: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "flex-end",
+    gap: 8,
+    marginLeft: 12,
+  },
+  actionBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  actionText: {
+    color: "#fff",
+    fontWeight: "600",
   },
 });
 

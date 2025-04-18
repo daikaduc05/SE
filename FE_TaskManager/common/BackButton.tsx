@@ -1,13 +1,17 @@
-import { router } from "expo-router";
+import { router, type RelativePathString } from "expo-router";
 import React from "react";
 import { TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 // Component nút back để quay lại màn hình trước đó
-const BackButton = () => {
+const BackButton = ({
+  urlBack,
+}:{
+  urlBack?: RelativePathString;
+}) => {
   return (
     <TouchableOpacity
-      onPress={() => router.back()}
+      onPress={() => urlBack ? router.push(urlBack) : router.back()}
       style={{
         position: "absolute", 
         top: 30,

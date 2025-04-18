@@ -1,20 +1,29 @@
-export interface ITask {
+import { IUser } from "./IUser";
+
+export interface ITaskFull {
    id: string;
-   project_id: string;
    description: string;
-   state: EState;
+   state: string ; 
    priority: string;
-   task_name: string;
-   created_time: string;
-   deadline: string;
-   done_at : string;
-   created_by: string;
-}
+   taskName: string;
+   createdTime: Date;
+   deadline: Date;
+   doneAt: Date;
+   taskUsers: ITaskUser[];
+   createdBy: IUser;
+ }
+
+
 
 export interface ITask_user {
-   task_id: string;
-   user_id: string;
-   is_assigned: boolean;
+  id: string;
+  assignTime: Date;
+  user : IUser;
 }
+
+export interface ITaskEdit{
+
+}
+
 
 
