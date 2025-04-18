@@ -6,6 +6,13 @@ import { userProviders } from '../users/repository/users.provider';
 import { notificationProviders } from './repository/notification.provider';
 import { roleProviders } from './repository/role.provider';
 import { notificationUserProviders } from './repository/notification-user.provider';
+import {
+  projectProviders,
+  roleUserProjectProviders,
+  taskProviders,
+  taskUserProviders,
+} from 'src/projects/repository';
+import { ProjectsService } from 'src/projects/projects.service';
 @Module({
   imports: [DbModule],
   providers: [
@@ -14,6 +21,11 @@ import { notificationUserProviders } from './repository/notification-user.provid
     ...notificationProviders,
     ...roleProviders,
     ...notificationUserProviders,
+    ...roleUserProjectProviders,
+    ProjectsService,
+    ...projectProviders,
+    ...taskProviders,
+    ...taskUserProviders,
   ],
   controllers: [UsersController],
 })
