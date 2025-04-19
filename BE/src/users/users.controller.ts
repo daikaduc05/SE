@@ -17,6 +17,7 @@ import { AuthenticateGuard } from 'src/users/authenticate/authenticate.guard';
 import { CustomRequest } from 'src/custom-interface';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Logger } from '@nestjs/common';
+import { ChangePasswordDto } from './dto/change-password.dto';
 @Controller('users')
 export class UsersController {
   private readonly logger: Logger = new Logger(UsersController.name);
@@ -59,9 +60,9 @@ export class UsersController {
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Put('/password')
-  async changePassword(@Body() newPassword: string, @Request() req: CustomRequest) {
+  async changePassword(@Body() body: ChangePasswordDto, @Request() req: CustomRequest) {
     this.logger.log('[Start Controller] change password');
-    return await this.usersService.changePassword(req.userId, newPassword);
+    return await this.usersService.changePassword(req.userId, body);
   }
 
   @ApiBearerAuth('access-token')
