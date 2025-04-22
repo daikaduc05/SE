@@ -134,6 +134,7 @@ const CreateProject = () => {
             },
           }
         );
+        console.log("member",memberCreate);
         if (res && member) {
           ToastAndroid.show("Project created successfully", ToastAndroid.SHORT);
           router.replace({

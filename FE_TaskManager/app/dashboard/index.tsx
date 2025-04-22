@@ -19,6 +19,8 @@ import { IUser } from "@/model/IUser";
 import axios from "axios";
 import { IProjects_Info } from "@/model/IProjects";
 import { useLocalSearchParams } from "expo-router";
+import { useNotification } from "@/context/NotificationContext";
+
 
 // Component chính cho Dashboard
 const Dashboard = () => {
@@ -27,6 +29,9 @@ const Dashboard = () => {
   const [listProject, setListProject] = useState<IProjects_Info[]>();
   const [modalVisible, setModalVisible] = useState(false);
   const [projectIdToDelete, setProjectIdToDelete] = useState<string>("");
+  const { setIsNotificationEnabled} = useNotification()
+ 
+  
 
   // Fetch user and project data
   useEffect(() => {
@@ -39,7 +44,7 @@ const Dashboard = () => {
         alert("Please login");
         router.push("/login");
         return;
-      } else {
+      } else {  
         try {
           const res = await axios.get(
             `${process.env.EXPO_PUBLIC_API_URL}/users/${decoded.id}`,
@@ -50,7 +55,10 @@ const Dashboard = () => {
               },
             }
           );
-          setUSerInfo(res.data);
+          if (res.data) {
+            setUSerInfo(res.data);
+            setIsNotificationEnabled(res.data.notiSettings)
+          }
           if (res) {
             console.log(
               `Get user: ,${process.env.EXPO_PUBLIC_API_URL}/users/${decoded.id}`
@@ -122,16 +130,7 @@ const Dashboard = () => {
   const greeting =
     time < 12 ? "Good Morning" : time < 18 ? "Good Afternoon" : "Good Evening";
 
-  useEffect(() => {
-    const getUser = async () => {
-      const user = await SecureStore.getItemAsync("user");
-      if (!user) {
-        router.push("/login");
-        return;
-      }
-    };
-    getUser();
-  }, []);
+ 
 
   return (
     <View className="flex-1 bg-[#1D2760]">
@@ -182,11 +181,13 @@ const Dashboard = () => {
         <View className="flex-row items-start gap-4 mt-4 justify-center">
           {/* Nút Notifications */}
           <TouchableOpacity
-            // onPress={() => router.push("/notifications")}
+            onPress={() => router.push("/userInfo/nofitication")}
+            
             className="bg-[#313384] p-4 rounded-full border-2 border-[#cdcdcd] shadow-xl"
           >
             <Ionicons name="notifications-outline" size={24} color="white" />
           </TouchableOpacity>
+          
 
           {/* Nút Settings */}
           <TouchableOpacity

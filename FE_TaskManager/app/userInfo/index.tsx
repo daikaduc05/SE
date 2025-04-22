@@ -18,6 +18,7 @@ import axios from "axios";
 import ImagePickerExample from "@/common/imagePicker";
 import BackButton from "@/common/BackButton";
 import { jwtDecode } from "jwt-decode";
+import { useNotification } from "@/context/NotificationContext";
 
 // Component chính cho trang UserInfo
 const UserInfo = () => {
@@ -31,6 +32,8 @@ const UserInfo = () => {
     useState(false);
   const [isNewPasswordVisible, setIsNewPasswordVisible] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const {setIsNotificationEnabled } = useNotification();
+  const [imageSelected, setImageSelected] = useState<string | null>(null);
 
   const handleSaveChanges = async () => {
     const user = {
@@ -52,6 +55,7 @@ const UserInfo = () => {
         }
       );
       if (res) {
+        setIsNotificationEnabled(user.notiSettings || true);
         ToastAndroid.show("Changes saved successfully", ToastAndroid.SHORT);
       } else {
         ToastAndroid.show("Changes saved failed", ToastAndroid.SHORT);
@@ -208,7 +212,7 @@ const UserInfo = () => {
             }
             className="w-24 h-24 rounded-full bg-white mb-2 border-4 border-[#CACCFD]"
           />
-          <ImagePickerExample setImage={setAvatar} />
+          <ImagePickerExample setImage={setAvatar} setImageSelect={setImageSelected} />
         </View>
 
         {/* Profile setting */}

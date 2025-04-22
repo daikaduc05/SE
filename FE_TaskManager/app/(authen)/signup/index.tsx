@@ -78,7 +78,7 @@ const Signup = () => {
             "Sign up successfully, please sign in to continue",
             ToastAndroid.SHORT
           );
-          router.push("/login");
+          router.replace("/login");
         } else {
           console.log("Sign up failed");
           setMessage("Sign up failed, please try again later");
@@ -112,14 +112,14 @@ const Signup = () => {
 
           <View
             className={`${
-              keyboardVisible ? "h-[90%]" : "h-[70%]"
+              keyboardVisible ? "h-[100%]" : "h-[80%]"
             } bg-white w-full flex items-center rounded-tl-[100px] justify-start gap-5 absolute bottom-0 py-10`}
           >
             <Text className="text-[28px] font-bold text-[#4737A5] tracking-[3px] mb-2">
               Create Account
             </Text>
 
-            <View className="w-full flex flex-col gap-3">
+            <View className="w-full flex flex-col gap-3 my-auto">
               <InputLabel
                 onChangeText={(text) => setFullName(text)}
                 title="Full Name"
@@ -162,7 +162,7 @@ const Signup = () => {
             </View>
 
             {/* Phần đăng nhập và nút đăng ký */}
-            <View className="w-full px-10 mt-5">
+            <View className="w-full px-10 ">
               <Text className="text-[#4737A5] text-center font-bold text-[14px]">
                 Already have an account?{" "}
                 <Link
@@ -186,7 +186,7 @@ const Signup = () => {
             </View>
           </View>
           {/* Thêm padding bottom để tránh bị che bởi bàn phím */}
-          <View className="h-[50px]"></View>
+          <View className="h-[100px]"></View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

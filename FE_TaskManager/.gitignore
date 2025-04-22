@@ -8,6 +8,8 @@ node_modules/
 dist/
 web-build/
 expo-env.d.ts
+notification-planify-firebase-adminsdk-fbsvc-506cb48cb9.json
+google-services.json
 
 # Native
 *.orig.*
