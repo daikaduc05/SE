@@ -35,18 +35,12 @@ export class UsersController {
     return await this.usersService.create(user);
   }
 
-  @Post('/login')
-  async login(@Body() user: UserLoginDto) {
-    this.logger.log('[Start Controller] login');
-    return await this.usersService.login(user);
-  }
-
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Get('/:id')
-  async find(@Param('id') id: string) {
-    this.logger.log('[Start Controller] find profile by id');
-    return await this.usersService.findOne(+id);
+  @Delete('/')
+  async delete(@Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] delete user');
+    return await this.usersService.deleteSelf(req.userId);
   }
 
   @ApiBearerAuth('access-token')
@@ -55,6 +49,12 @@ export class UsersController {
   async update(@Body() user: UserUpdateDto, @Request() req: CustomRequest) {
     this.logger.log('[Start Controller] update user profile');
     return await this.usersService.update(req.userId, user);
+  }
+
+  @Post('/login')
+  async login(@Body() user: UserLoginDto) {
+    this.logger.log('[Start Controller] login');
+    return await this.usersService.login(user);
   }
 
   @ApiBearerAuth('access-token')
@@ -67,9 +67,35 @@ export class UsersController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Delete('/')
-  async delete(@Request() req: CustomRequest) {
-    this.logger.log('[Start Controller] delete user');
-    return await this.usersService.deleteSelf(req.userId);
+  @Get('/notifications')
+  async getNotifications(@Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] get notifications');
+    return await this.usersService.getNotifications(req.userId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Put('/notifications/:id')
+  async readNotification(@Param('id') id: number, @Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] read notification');
+    this.logger.log(req.userId);
+    return await this.usersService.readNotification(id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Delete('/notifications/:id')
+  async deleteNotification(@Param('id') id: number, @Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] delete notification');
+    this.logger.log(req.userId);
+    return await this.usersService.deleteNotification(id);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Get('/:id')
+  async find(@Param('id') id: string) {
+    this.logger.log('[Start Controller] find profile by id');
+    return await this.usersService.findOne(+id);
   }
 }

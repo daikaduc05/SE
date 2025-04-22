@@ -74,6 +74,7 @@ export class ProjectsController {
     @Body() body: AssignTaskDto,
   ) {
     this.logger.log('[Start Controller] assignTask');
+    this.logger.log(body);
     return await this.projectsService.assignTask(taskId, body.emails);
   }
 

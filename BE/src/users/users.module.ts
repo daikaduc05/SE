@@ -13,6 +13,7 @@ import {
   taskUserProviders,
 } from 'src/projects/repository';
 import { ProjectsService } from 'src/projects/projects.service';
+import { NotificationGateway } from 'src/projects/notification.gateway';
 @Module({
   imports: [DbModule],
   providers: [
@@ -26,6 +27,9 @@ import { ProjectsService } from 'src/projects/projects.service';
     ...projectProviders,
     ...taskProviders,
     ...taskUserProviders,
+    ...notificationProviders,
+    ...notificationUserProviders,
+    NotificationGateway,
   ],
   controllers: [UsersController],
 })

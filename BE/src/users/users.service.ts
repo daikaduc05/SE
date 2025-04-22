@@ -11,15 +11,25 @@ import { config } from 'dotenv';
 import 'reflect-metadata';
 import { Role } from './entities/role.entity';
 import { ChangePasswordDto } from './dto/change-password.dto';
-
+import { NotificationUser } from './entities/notification-user.entity';
+import { Notification } from './entities/notification.entity';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Logger } from '@nestjs/common';
+import { TypeNotiEnum } from 'src/enum/typeNoti.enum';
 config();
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
   constructor(
     @Inject('USER_REPOSITORY')
     private userRepository: Repository<User>,
     @Inject('ROLE_REPOSITORY')
     private roleRepository: Repository<Role>,
+    @Inject('NOTIFICATION_USER_REPOSITORY')
+    private notificationUserRepository: Repository<NotificationUser>,
+    @Inject('NOTIFICATION_REPOSITORY')
+    private notificationRepository: Repository<Notification>,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async findAll(): Promise<User[] | null> {
@@ -123,5 +133,51 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
     return await this.userRepository.save(user);
+  }
+
+  async getNotifications(userId: number): Promise<NotificationUser[] | null> {
+    return await this.notificationUserRepository.find({
+      where: { user: { id: userId } },
+      relations: ['notification'],
+    });
+  }
+
+  async sendNotification(
+    userId: number,
+    message: string,
+    type: TypeNotiEnum,
+    idObject: number,
+  ): Promise<void> {
+    const notification = new Notification();
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      this.logger.error(`User not found for userId ${userId}`);
+      return;
+    }
+    notification.content = message;
+    notification.createdAt = new Date();
+    notification.type = type;
+    notification.idObject = idObject;
+    const notificationUser = new NotificationUser();
+    notificationUser.notification = notification;
+    notificationUser.user = user;
+    notificationUser.isRead = false;
+
+    await this.notificationRepository.save(notification);
+    await this.notificationUserRepository.save(notificationUser);
+    this.eventEmitter.emit('triggerNoti', {
+      userId: userId,
+      message: message,
+      type: type,
+      idObject: idObject,
+    });
+  }
+
+  async readNotification(userId: number): Promise<void> {
+    await this.notificationUserRepository.update({ user: { id: userId } }, { isRead: true });
+  }
+
+  async deleteNotification(notificationId: number): Promise<void> {
+    await this.notificationUserRepository.delete(notificationId);
   }
 }

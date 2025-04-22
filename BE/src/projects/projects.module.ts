@@ -6,11 +6,16 @@ import { projectProviders } from './repository/project.provider';
 import { taskProviders } from './repository/task.provider';
 import { taskUserProviders } from './repository/task-user.provider';
 import { roleUserProjectProviders } from './repository/role-user-project.provider';
-import { roleProviders, userProviders } from 'src/users/repository';
+import {
+  notificationProviders,
+  notificationUserProviders,
+  roleProviders,
+  userProviders,
+} from 'src/users/repository';
 import { UsersService } from 'src/users/users.service';
-
+import { EventEmitterModule } from '@nestjs/event-emitter';
 @Module({
-  imports: [DbModule],
+  imports: [DbModule, EventEmitterModule.forRoot()],
   controllers: [ProjectsController],
   providers: [
     ProjectsService,
@@ -23,6 +28,8 @@ import { UsersService } from 'src/users/users.service';
     ...taskProviders,
     ...roleProviders,
     ...taskUserProviders,
+    ...notificationProviders,
+    ...notificationUserProviders,
   ],
   exports: [ProjectsService],
 })

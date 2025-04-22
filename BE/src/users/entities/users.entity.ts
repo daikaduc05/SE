@@ -2,7 +2,6 @@
 import { TaskUser } from '../../projects/entities/task-user.entity';
 import { RoleUserProject } from '../../projects/entities/role-user-project.entity';
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { Notification } from './notification.entity';
 import { Task } from '../../projects/entities/task.entity';
 import { NotificationUser } from './notification-user.entity';
 @Entity('users')
@@ -36,9 +35,6 @@ export class User {
 
   @OneToMany(() => Task, (task) => task.createdBy)
   taskCreated: Task[];
-
-  @OneToMany(() => Notification, (notification) => notification.createdBy)
-  notificationCreated: Notification[];
 
   @OneToMany(() => NotificationUser, (notificationUser) => notificationUser.user)
   notificationUser: NotificationUser[];

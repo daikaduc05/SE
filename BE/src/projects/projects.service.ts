@@ -21,7 +21,7 @@ import { UserWithRoleDto } from './dto/user-with-role.dto';
 import { TaskResponseDto, AssignedUserDto } from './dto/task-response.dto';
 import { UpdateMemberProjectDto } from './dto/add-member.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
-
+import { TypeNotiEnum } from 'src/enum/typeNoti.enum';
 @Injectable()
 export class ProjectsService {
   private readonly logger = new Logger(ProjectsService.name);
@@ -101,11 +101,14 @@ export class ProjectsService {
     const project = await this.findOneProject(projectId);
     const user = await this.userService.findByEmails(updateMemberProject.map((item) => item.email));
     const role = await this.userService.findRole(updateMemberProject.map((item) => item.roleName));
-    this.logger.log(user);
-    this.logger.log(role);
     if (!project) throw NotFoundException;
     if (!user) throw NotFoundException;
     if (!role) throw NotFoundException;
+    const existingUsers = await this.roleUserProjectRepository.find({
+      where: { project: project },
+      relations: ['user'],
+    });
+    const existingUserIds = existingUsers.map((item) => item.user.id);
     await this.roleUserProjectRepository.delete({ project: project });
     for (let i = 0; i < updateMemberProject.length; i++) {
       const newRoleUserProject = new RoleUserProject();
@@ -113,6 +116,14 @@ export class ProjectsService {
       newRoleUserProject.user = user[i];
       newRoleUserProject.role = role[i];
       await this.roleUserProjectRepository.save(newRoleUserProject);
+      if (!existingUserIds.includes(user[i].id)) {
+        await this.userService.sendNotification(
+          user[i].id,
+          `You have been added to the project: ${project.name}`,
+          TypeNotiEnum.Project,
+          project.id,
+        );
+      }
       this.logger.log(newRoleUserProject);
     }
     return true;
@@ -168,6 +179,12 @@ export class ProjectsService {
       taskUser.user = user;
       taskUser.assignTime = new Date();
       taskUsers.push(taskUser);
+      await this.userService.sendNotification(
+        user.id,
+        `You have been assigned to a new task: ${task.taskName}`,
+        TypeNotiEnum.Task,
+        task.id,
+      );
     }
     return await this.taskUserRespotiry.save(taskUsers);
   }
@@ -214,6 +231,16 @@ export class ProjectsService {
   ): Promise<Project | null> {
     const project = await this.findOneProject(projectId);
     if (!project) throw NotFoundException;
+    const userList = await this.findUserByProject(projectId);
+    if (userList)
+      for (const user of userList) {
+        await this.userService.sendNotification(
+          user.id,
+          `The project ${project.name} has been updated`,
+          TypeNotiEnum.Project,
+          project.id,
+        );
+      }
     Object.assign(project, updateData);
     return await this.projectRepository.save(project);
   }
@@ -223,13 +250,24 @@ export class ProjectsService {
     updateData: UpdateTaskDto,
     userId: number,
   ): Promise<Task | null> {
-    const task = await this.findOneTask(taskId);
     const user = await this.userService.findOne(userId);
-    const taskUser = await this.taskUserRespotiry.findOne({
-      where: { task: task as Task, user: user as User },
+    const task = await this.taskRepository.findOne({
+      where: { id: taskId },
+      relations: ['taskUsers.user', 'createdBy'],
     });
-    if (!taskUser) throw UnauthorizedException;
-    if (!task) throw NotFoundException; // Cập nhật thông tin task
+    if (!user) throw UnauthorizedException;
+    if (!task) throw NotFoundException;
+    this.logger.log(task.createdBy);
+    this.logger.log(user);
+    if (user.id != task.createdBy.id) throw UnauthorizedException;
+    for (const user of task.taskUsers) {
+      await this.userService.sendNotification(
+        user.user.id,
+        `The task ${task.taskName} has been updated`,
+        TypeNotiEnum.Task,
+        task.id,
+      );
+    }
     Object.assign(task, updateData);
     return await this.taskRepository.save(task);
   }
