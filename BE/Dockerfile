@@ -13,4 +13,4 @@ EXPOSE 3000
 
 ENV WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
 
-CMD ["sh", "-c", "node dist/src/main.js >> /home/LogFiles/app.log 2>&1"]
+CMD ["node", "dist/src/main.js"]
