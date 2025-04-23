@@ -109,6 +109,7 @@ export class ProjectsService {
       relations: ['user'],
     });
     const existingUserIds = existingUsers.map((item) => item.user.id);
+    const notifiedUserIds = new Set<number>();
     await this.roleUserProjectRepository.delete({ project: project });
     for (let i = 0; i < updateMemberProject.length; i++) {
       const newRoleUserProject = new RoleUserProject();
@@ -116,7 +117,7 @@ export class ProjectsService {
       newRoleUserProject.user = user[i];
       newRoleUserProject.role = role[i];
       await this.roleUserProjectRepository.save(newRoleUserProject);
-      if (!existingUserIds.includes(user[i].id)) {
+      if (!existingUserIds.includes(user[i].id) && !notifiedUserIds.has(user[i].id)) {
         await this.userService.sendNotification(
           user[i].id,
           `You have been added to the project: ${project.name}`,
@@ -124,6 +125,7 @@ export class ProjectsService {
           project.id,
           0,
         );
+        notifiedUserIds.add(user[i].id);
       }
       this.logger.log(newRoleUserProject);
     }
