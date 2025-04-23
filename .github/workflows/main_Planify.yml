@@ -31,7 +31,7 @@ jobs:
       with:
         push: true
         tags: planify.azurecr.io/${{ secrets.AzureAppService_ContainerUsername_36f3769b10a8440895ad1f5c48609c10 }}/planify-app:${{ github.sha }}
-        file: ./Dockerfile
+        file: ./BE/Dockerfile
 
   deploy:
     runs-on: ubuntu-latest
