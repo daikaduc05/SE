@@ -7,8 +7,10 @@ RUN npm install
 
 COPY . .
 
-RUN npm run build 
+RUN npm run build
 
 EXPOSE 3000
 
-CMD ["node", "dist/src/main.js"]
+ENV WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
+
+CMD ["sh", "-c", "node dist/src/main.js >> /home/LogFiles/app.log 2>&1"]
