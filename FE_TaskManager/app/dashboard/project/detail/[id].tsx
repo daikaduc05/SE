@@ -14,7 +14,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 import BackButton from "@/common/BackButton";
 import { IProjects_Detail, IProjects_member } from "@/model/IProjects";
-import { IAddUser } from "@/model/IUser";
+
 
 // Dummy member list (thay bằng API nếu cần)
 

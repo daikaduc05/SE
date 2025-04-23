@@ -11,6 +11,8 @@ expo-env.d.ts
 notification-planify-firebase-adminsdk-fbsvc-506cb48cb9.json
 google-services.json
 
+.idea
+
 # Native
 *.orig.*
 *.jks

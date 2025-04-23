@@ -7,11 +7,11 @@ import { useEffect } from "react";
 export default function Index() {
   // const width =  useSharedValue(100)
   const handleSignIn = () => {
-    router.replace("/login");
+    router.push("/login");
     // width.value = width.value + 100
   };
-  const handleSignUp = () => {
-    router.replace("/signup");
+  const handleSignUp = () => {  
+    router.push("/signup");
   };
 
   useEffect(() => {

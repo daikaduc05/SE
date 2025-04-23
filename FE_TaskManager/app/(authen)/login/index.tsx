@@ -3,7 +3,7 @@ import AuthenButton from "@/common/Button";
 import InputLabel from "@/common/InputLabel";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, {  useState } from "react";
 import {
   Text,
   ToastAndroid,
@@ -11,8 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Keyboard,
-  KeyboardEvent,
+  // Keyboard,
+  // KeyboardEvent,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
@@ -22,32 +22,33 @@ const Index = () => {
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [message, setMessage] = useState("");
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  
+  // const [keyboardOffset, setKeyboardOffset] = useState(0);
 
-  useEffect(() => {
-    // const checkToken = async () => {
-    //   const token = await SecureStore.getItemAsync("token"); 
-    //   if (token) {
-    //     router.replace("/dashboard"); // Redirect to dashboard if token exists
-    //   }
-    // };
-    // checkToken();
+  // useEffect(() => {
+  //   // const checkToken = async () => {
+  //   //   const token = await SecureStore.getItemAsync("token"); 
+  //   //   if (token) {
+  //   //     router.replace("/dashboard"); // Redirect to dashboard if token exists
+  //   //   }
+  //   // };
+  //   // checkToken();
 
-    const keyboardDidShow = Keyboard.addListener(
-      "keyboardDidShow",
-      (e: KeyboardEvent) => {
-        setKeyboardOffset(e.endCoordinates.height);
-      }
-    );
-    const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardOffset(0);
-    });
+  //   const keyboardDidShow = Keyboard.addListener(
+  //     "keyboardDidShow",
+  //     (e: KeyboardEvent) => {
+  //       setKeyboardOffset(e.endCoordinates.height);
+  //     }
+  //   );
+  //   const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
+  //     setKeyboardOffset(0);
+  //   });
 
-    return () => {
-      keyboardDidShow.remove();
-      keyboardDidHide.remove();
-    };
-  }, []);
+  //   return () => {
+  //     keyboardDidShow.remove();
+  //     keyboardDidHide.remove();
+  //   };
+  // }, []);
 
   const handleSignIn = async () => {
     if (email === "" || password === "") {

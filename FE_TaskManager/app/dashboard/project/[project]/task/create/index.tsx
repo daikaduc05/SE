@@ -28,6 +28,8 @@ const CreateTask = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [prioritySelect, setPrioritySelect] = useState("");
   const [description, setDescription] = useState<string>("");
+
+;
   const handleSelectMember = (member: string) => {
     if (memberTask.includes(member)) {
       setMemberTask(memberTask.filter((item) => item !== member));

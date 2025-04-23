@@ -25,7 +25,6 @@ const Signup = () => {
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false); // Thêm state để theo dõi bàn phím
-  const [message, setMessage] = useState("");
 
   // Theo dõi sự kiện hiển thị/ẩn bàn phím
   React.useEffect(() => {
@@ -73,7 +72,6 @@ const Signup = () => {
         );
         if (res) {
           console.log(res.data);
-          setMessage("");
           ToastAndroid.show(
             "Sign up successfully, please sign in to continue",
             ToastAndroid.SHORT
@@ -81,11 +79,9 @@ const Signup = () => {
           router.replace("/login");
         } else {
           console.log("Sign up failed");
-          setMessage("Sign up failed, please try again later");
         }
       } catch (error) {
         console.log("Error:", error);
-        setMessage("An error occurred, please try again later");
       }
     }
   };
@@ -165,11 +161,7 @@ const Signup = () => {
             <View className="w-full px-10 ">
               <Text className="text-[#4737A5] text-center font-bold text-[14px]">
                 Already have an account?{" "}
-                <Link
-                  href="/login"
-                  onPress={() => setMessage("")}
-                  className="underline"
-                >
+                <Link href="/login" className="underline">
                   Sign in
                 </Link>
               </Text>

@@ -69,8 +69,8 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
-      shouldPlaySound: false,
-      shouldSetBadge: false,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
     }),
   });
 
@@ -83,13 +83,21 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       } catch (err) {
         setError(err instanceof Error ? err : new Error(String(err)));
       }
-
+  
       if (Platform.OS === "android") {
         const ch = await Notifications.getNotificationChannelsAsync();
         setChannels(ch ?? []);
       }
+  
+      // 🔔 Check if app was opened from a notification (after being killed)
+      const lastResponse = await Notifications.getLastNotificationResponseAsync();
+      if (lastResponse) {
+        const url = '/userInfo/nofitication'; // Replace with your desired URL
+        router.push(url); // Navigate to the desired screen
+      }
     })();
   }, []);
+  
 
   /* ---------- Foreground & interaction listeners for notifications -------- */
   useEffect(() => {
@@ -101,6 +109,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         console.log("🔔 User clicked notification:", response);
+        router.push("/userInfo/nofitication"); // Navigate to the desired screen
         // const data = response.notification.request.content.data;
         // if (data?.screen === "TaskDetail" && data?.taskId) {
         //   rou  ter.push(`/dashboard/task/${data.taskId}`);
@@ -151,20 +160,35 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         const handleIncoming = async (msg: any) => {
           if (!isNotificationEnabled) return;
 
+          const token = await SecureStore.getItemAsync("token");
+          const decoded = jwtDecode<{ id: string }>(token ?? "");
+
+          // 🛑 Nếu chính mình gửi thì không hiện
+          if (msg.senderId === decoded.id) {
+            console.log("🔕 Bỏ qua thông báo chính mình");
+            return;
+          }
+
           console.log("📥 Received socket notification:", msg);
 
-          // Update context state
+          const title = msg.title || "New Notification";
+          const body = msg.body || "You have a new message";
+
+          // Update UI context
           setNotification({
-            request: { trigger: null, identifier: "socket" },
-            date: new Date(),
-            ...msg,
+            request: {
+              trigger: null,
+              identifier: "socket",
+              content: { title, body, data: msg },
+            },
+            date: Date.now(),
           } as Notifications.Notification);
 
-          // Show local notification
+          // Hiện thông báo local trên máy
           await Notifications.scheduleNotificationAsync({
             content: {
-              title: msg.title ?? "New notification",
-              body: msg.body ?? "You have a new notification",
+              title : title,
+              body : body,
               data: msg,
             },
             trigger: null,

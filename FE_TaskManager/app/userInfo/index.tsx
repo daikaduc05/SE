@@ -1,4 +1,4 @@
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
+import {  FontAwesome } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -57,6 +57,7 @@ const UserInfo = () => {
       if (res) {
         setIsNotificationEnabled(user.notiSettings || true);
         ToastAndroid.show("Changes saved successfully", ToastAndroid.SHORT);
+        console.log("Changes saved successfully:", res.data);
       } else {
         ToastAndroid.show("Changes saved failed", ToastAndroid.SHORT);
       }
@@ -206,7 +207,7 @@ const UserInfo = () => {
         <View className="items-center mb-8">
           <Image
             source={
-              avatar
+              ( avatar || imageSelected)
                 ? { uri: avatar }
                 : require("../../assets/images/placeholderAva.jpg")
             }

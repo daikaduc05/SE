@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   TouchableOpacity,
   Text,
@@ -6,19 +6,24 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import axios from "axios";
 
 // ⚠️ Nhớ thay bằng thông tin thật của bạn
-const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME; // ví dụ: "myapp123"
+const CLOUD_NAME = "dqupovatf"; // ví dụ: "myapp123"
 const UPLOAD_PRESET = "demo_frame_print"; // ví dụ: "expo_upload"
+import * as SecureStore from "expo-secure-store";
 
 export default function ImagePickerExample({
   setImage,
-  setImageSelect
+  setImageSelect,
 }: {
   setImage: (image: string) => void;
   setImageSelect: (image: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  useEffect(() => {
+    console.log("CLOUD_NAME", CLOUD_NAME);
+  }, []);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -40,7 +45,6 @@ export default function ImagePickerExample({
   const uploadToCloudinary = async (uri: string) => {
     try {
       setUploading(true);
-
       const formData = new FormData();
       formData.append("file", {
         uri,
@@ -61,6 +65,26 @@ export default function ImagePickerExample({
       if (data.secure_url) {
         ToastAndroid.show("Upload successful!", ToastAndroid.SHORT);
         setImage(data.secure_url); // Gửi URL về component cha
+        console.log("Cloudinary response:", data.secure_url);
+        try {
+          await axios.put(
+            `${process.env.EXPO_PUBLIC_API_URL}/users`,
+            {
+              avatar: data.secure_url as string,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${await SecureStore.getItemAsync(
+                  "token"
+                )}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+        } catch (error) {
+          console.error("Error setting image:", error);
+          ToastAndroid.show("Error setting image", ToastAndroid.SHORT);
+        }
       } else {
         ToastAndroid.show("Upload failed", ToastAndroid.SHORT);
         console.error("Cloudinary error:", data);

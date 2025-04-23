@@ -5,23 +5,32 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
+  ToastAndroid,
+  Modal,
 } from "react-native";
 import { useNotification } from "@/context/NotificationContext";
 import BackButton from "@/common/BackButton";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
+import { router } from "expo-router";
 
 interface NotificationItem {
   id: string;
+  isRead: boolean;
   body: string;
   timestamp: string;
-  isRead: boolean;
+  type?: string | null;
+  idObject?: number | null;
+  idTask?: number | null;
 }
 
 const NotificationScreen = () => {
   const { notification } = useNotification();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [confirmVisible, setConfirmVisible] = useState(false);
+  const [filter, setFilter] = useState<"All" | "Read" | "Unread">("All");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -39,12 +48,14 @@ const NotificationScreen = () => {
         if (res.data) {
           const notiData: NotificationItem[] = res.data.map((item: any) => ({
             id: String(item.id),
+            isRead: item.isRead,
             body: item.notification.content,
             timestamp: item.notification.createdAt,
-            isRead: item.isRead,
+            type: item.notification.type,
+            idObject: item.notification.idObject,
+            idTask: item.notification.idTask,
           }));
           setNotifications(notiData);
-          console.log("renderdata", notiData);
         }
       } catch (error) {
         console.error("Error fetching notifications:", error);
@@ -52,24 +63,20 @@ const NotificationScreen = () => {
     };
 
     fetchNotifications();
-  }, []);
+  }, [isLoading]);
 
   useEffect(() => {
     if (notification) {
-      const newNoti: NotificationItem = {
-        id: Date.now().toString(),
-        body: notification.request?.content?.body || "No Body",
-        timestamp: new Date().toISOString(),
-        isRead: false,
-      };
-      setNotifications((prev) => [newNoti, ...prev]);
+      setIsLoading(!isLoading);
     }
   }, [notification]);
 
   const handleDeleteNotification = async (id: string) => {
-    setNotifications((prev) => prev.filter((item) => item.id !== id));
+    const isFromServer = !id.startsWith("temp_") && !isNaN(Number(id));
+    if (!isFromServer) return;
+
     try {
-      await axios.delete(
+      const res = await axios.delete(
         `${process.env.EXPO_PUBLIC_API_URL}/users/notifications/${id}`,
         {
           headers: {
@@ -78,20 +85,20 @@ const NotificationScreen = () => {
           },
         }
       );
+      if (res) {
+        ToastAndroid.show("Notification deleted", ToastAndroid.SHORT);
+        setNotifications((prev) => prev.filter((item) => item.id !== id));
+      }
     } catch (error) {
       console.log(error);
     }
   };
 
   const toggleReadStatus = async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((item) =>
-        item.id === id ? { ...item, isRead: !item.isRead } : item
-      )
-    );
     try {
-      await axios.put(
+      const res = await axios.put(
         `${process.env.EXPO_PUBLIC_API_URL}/users/notifications/${id}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
@@ -99,10 +106,44 @@ const NotificationScreen = () => {
           },
         }
       );
+      if (res) {
+        setNotifications((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, isRead: !item.isRead } : item
+          )
+        );
+      }
     } catch (error) {
       console.log(error);
     }
   };
+
+  const handleDeleteAllNotifications = async () => {
+    try {
+      const res = await axios.delete(
+        `${process.env.EXPO_PUBLIC_API_URL}/users/notifications`,
+        {
+          headers: {
+            Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
+          },
+        }
+      );
+      if (res) {
+        setNotifications([]);
+        ToastAndroid.show("All notifications deleted", ToastAndroid.SHORT);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const filteredNotifications = [...notifications]
+    .filter((item) => {
+      if (filter === "All") return true;
+      if (filter === "Read") return item.isRead;
+      if (filter === "Unread") return !item.isRead;
+    })
+    .sort((a, b) => Number(a.isRead) - Number(b.isRead)); // Unread lên trước
 
   return (
     <SafeAreaView className="flex-1 relative">
@@ -115,20 +156,67 @@ const NotificationScreen = () => {
       />
 
       <BackButton />
-      <View className="flex-row justify-between items-center mt-20 px-4 ">
-        <Text className="text-white text-2xl font-bold text-center flex-1 ">
-          Notifications
-        </Text>
+      <View className="relative justify-center items-center mt-20 px-4">
+        <View className="absolute left-0 right-0 items-center">
+          <Text className="text-white text-2xl font-bold">Notifications</Text>
+        </View>
+
+        {notifications.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setConfirmVisible(true)}
+            className="ml-auto bg-red-600 px-3 py-2 rounded-full"
+          >
+            <Text className="text-white text-xs font-semibold">Clear All</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
-      <ScrollView className="flex-1 bg-[#1D2760] top-0 left-0 rounded-t-[40px] px-6 py-8 mt-10">
-        <View className="p-2 rounded-t-[40px]">
-          {notifications.length !== 0 ? (
-            notifications.map((item) => (
+      {/* Filter buttons */}
+      <View className="flex-row justify-center gap-4 mt-10">
+        {["All", "Unread", "Read"].map((f) => (
+          <TouchableOpacity
+            key={f}
+            onPress={() => setFilter(f as any)}
+            className={`px-4 py-2 rounded-full ${
+              filter === f ? "bg-white" : "bg-[#313384]"
+            }`}
+          >
+            <Text
+              className={`text-sm font-semibold ${
+                filter === f ? "text-black" : "text-white"
+              }`}
+            >
+              {f}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <ScrollView className="flex-1 bg-[#1D2760] rounded-t-[40px] px-6 py-8 mt-4">
+        <View className="p-2">
+          {filteredNotifications.length !== 0 ? (
+            filteredNotifications.map((item) => (
               <TouchableOpacity
                 key={item.id}
                 onPress={() => {
                   if (!item.isRead) toggleReadStatus(item.id);
+                }}
+                onLongPress={() => {
+                  if (item.type === "task" && item.idTask && item.idObject) {
+                    router.replace({
+                      pathname: "/dashboard/project/[project]/task/[id]",
+                      params: {
+                        project: item.idObject,
+                        id: item.idTask,
+                      },
+                    });
+                  }
+                  if (item.type === "object" && item.idObject) {
+                    router.replace({
+                      pathname: "/dashboard/project/[project]",
+                      params: { project: item.idObject },
+                    });
+                  }
                 }}
                 activeOpacity={0.8}
                 className={`p-4 rounded-2xl mb-4 shadow-lg ${
@@ -147,7 +235,6 @@ const NotificationScreen = () => {
                 </Text>
 
                 <View className="flex-row justify-between mt-5">
-                  {/* Delete button giữ nguyên */}
                   <TouchableOpacity
                     onPress={() => handleDeleteNotification(item.id)}
                     className="bg-red-500 px-3 py-1 rounded-full"
@@ -156,8 +243,6 @@ const NotificationScreen = () => {
                       Delete
                     </Text>
                   </TouchableOpacity>
-
-                  {/* Trạng thái Read/Unread chỉ để hiển thị */}
                   <View
                     className={`px-3 py-1 rounded-full ${
                       item.isRead ? "bg-green-600" : "bg-gray-600"
@@ -182,6 +267,36 @@ const NotificationScreen = () => {
           )}
         </View>
       </ScrollView>
+
+      {/* Modal xác nhận xóa tất cả */}
+      {confirmVisible && (
+        <Modal transparent animationType="fade" visible={confirmVisible}>
+          <View className="flex-1 justify-center items-center bg-black/50">
+            <View className="bg-white w-[80%] p-6 rounded-xl">
+              <Text className="text-center text-lg font-semibold mb-4">
+                Are you sure you want to delete all notifications?
+              </Text>
+              <View className="flex-row justify-around mt-4">
+                <TouchableOpacity
+                  className="bg-red-500 px-6 py-2 rounded-md"
+                  onPress={() => {
+                    handleDeleteAllNotifications();
+                    setConfirmVisible(false);
+                  }}
+                >
+                  <Text className="text-white font-medium">Delete All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="bg-gray-300 px-6 py-2 rounded-md"
+                  onPress={() => setConfirmVisible(false)}
+                >
+                  <Text className="text-black font-medium">Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
