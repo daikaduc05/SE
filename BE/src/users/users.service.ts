@@ -176,8 +176,8 @@ export class UsersService {
     });
   }
 
-  async readNotification(userId: number): Promise<void> {
-    await this.notificationUserRepository.update({ user: { id: userId } }, { isRead: true });
+  async readNotification(notificationId: number): Promise<void> {
+    await this.notificationUserRepository.update({ id: notificationId }, { isRead: true });
   }
 
   async deleteNotification(notificationId: number): Promise<void> {
