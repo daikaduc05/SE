@@ -122,6 +122,7 @@ export class ProjectsService {
           `You have been added to the project: ${project.name}`,
           TypeNotiEnum.Project,
           project.id,
+          0,
         );
       }
       this.logger.log(newRoleUserProject);
@@ -183,6 +184,7 @@ export class ProjectsService {
         user.id,
         `You have been assigned to a new task: ${task.taskName}`,
         TypeNotiEnum.Task,
+        task.project.id,
         task.id,
       );
     }
@@ -239,6 +241,7 @@ export class ProjectsService {
           `The project ${project.name} has been updated`,
           TypeNotiEnum.Project,
           project.id,
+          0,
         );
       }
     Object.assign(project, updateData);
@@ -265,6 +268,7 @@ export class ProjectsService {
         user.user.id,
         `The task ${task.taskName} has been updated`,
         TypeNotiEnum.Task,
+        task.project.id,
         task.id,
       );
     }

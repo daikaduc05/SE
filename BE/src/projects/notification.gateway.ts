@@ -54,13 +54,29 @@ export class NotificationGateway implements OnGatewayConnection, OnGatewayDiscon
   }
 
   @OnEvent('triggerNoti')
-  handleTriggerNoti(payload: { userId: number; message: string; type: TypeNotiEnum; id: number }) {
-    this.logger.log(`Sending notification to user ${payload.userId}: ${payload.message}`);
+  handleTriggerNoti(payload: {
+    userId: number;
+    message: string;
+    type: TypeNotiEnum;
+    projectId: number;
+    taskId: number;
+  }) {
+    this.logger.log(
+      `Sending notification to user ${payload.userId}: ${payload.message} with payload ${JSON.stringify(
+        payload,
+      )}`,
+    );
     const clientId = this.userIdToClientIdMap.get(payload.userId);
     if (clientId) {
       this.server
         .to(clientId)
-        .emit(`noti:${payload.userId}`, payload.message, payload.type, payload.id);
+        .emit(
+          `noti:${payload.userId}`,
+          payload.message,
+          payload.type,
+          payload.projectId,
+          payload.taskId,
+        );
     } else {
       this.logger.warn(`No client found for userId ${payload.userId}`);
     }

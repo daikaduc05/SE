@@ -84,6 +84,14 @@ export class UsersController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
+  @Delete('/notifications/')
+  async deleteAllNotifications(@Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] delete all notifications');
+    return await this.usersService.deleteAllNotifications(req.userId);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
   @Delete('/notifications/:id')
   async deleteNotification(@Param('id') id: number, @Request() req: CustomRequest) {
     this.logger.log('[Start Controller] delete notification');

@@ -146,7 +146,8 @@ export class UsersService {
     userId: number,
     message: string,
     type: TypeNotiEnum,
-    idObject: number,
+    projectId: number,
+    taskId: number,
   ): Promise<void> {
     const notification = new Notification();
     const user = await this.userRepository.findOne({ where: { id: userId } });
@@ -157,7 +158,8 @@ export class UsersService {
     notification.content = message;
     notification.createdAt = new Date();
     notification.type = type;
-    notification.idObject = idObject;
+    notification.projectId = projectId;
+    notification.taskId = taskId;
     const notificationUser = new NotificationUser();
     notificationUser.notification = notification;
     notificationUser.user = user;
@@ -169,7 +171,8 @@ export class UsersService {
       userId: userId,
       message: message,
       type: type,
-      idObject: idObject,
+      projectId: projectId,
+      taskId: taskId,
     });
   }
 
@@ -179,5 +182,9 @@ export class UsersService {
 
   async deleteNotification(notificationId: number): Promise<void> {
     await this.notificationUserRepository.delete(notificationId);
+  }
+
+  async deleteAllNotifications(userId: number): Promise<void> {
+    await this.notificationUserRepository.delete({ user: { id: userId } });
   }
 }

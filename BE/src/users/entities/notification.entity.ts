@@ -16,7 +16,10 @@ export class Notification {
   type: string;
 
   @Column()
-  idObject: number;
+  projectId: number;
+
+  @Column()
+  taskId: number;
 
   @OneToMany(() => NotificationUser, (notificationUser) => notificationUser.notification)
   notificationUser: NotificationUser[];
