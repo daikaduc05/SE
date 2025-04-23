@@ -1,0 +1,16 @@
+
+node_modules
+coverage
+logs
+
+
+Dockerfile
+docker-compose.yml
+*.log
+*.md
+*.lock
+.npmrc
+
+.vscode
+.idea
+*.swp
