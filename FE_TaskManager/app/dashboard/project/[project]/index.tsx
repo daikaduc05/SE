@@ -372,12 +372,7 @@ const ProjectDetail = () => {
               onToggle={() => toggleTaskStatus(task.id)}
               setIsVisible={setIsVisible}
               setTaskId={setTaskId}
-              onEdit={(id) =>
-                router.push({
-                  pathname: "/dashboard/project/[project]/task/[id]",
-                  params: { project, id },
-                })
-              }
+              projectId={project}
             />
           ))}
         </ScrollView>

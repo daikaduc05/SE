@@ -20,9 +20,7 @@ import * as SecureStore from "expo-secure-store";
 import { jwtDecode } from "jwt-decode";
 import { IEditUser } from "@/model/IProjects";
 
-// Component tạo dự án mới
 const CreateProject = () => {
-  // Các state quản lý thông tin dự án
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [members, setMembers] = useState<IAddUser[]>([]);
@@ -31,6 +29,20 @@ const CreateProject = () => {
   const [isLimitDate, setIsLimitDate] = useState(false);
   const [createby, setcreateby] = useState<string>("");
   const [memberCreate, setMemberCreate] = useState<IEditUser[]>([]);
+
+  const updateMemberCreateList = (membersList: IAddUser[]) => {
+    const result: IEditUser[] = membersList.flatMap((item) =>
+      item.roleName.map((role) => ({
+        email: item.email,
+        roleName: role,
+      }))
+    );
+    setMemberCreate(result);
+  };
+
+  useEffect(() => {
+    console.log("memberCreate", memberCreate);
+  }, [memberCreate]);
 
   useEffect(() => {
     const fetching = async () => {
@@ -42,26 +54,23 @@ const CreateProject = () => {
         roleName: ["admin", "user"],
       };
       if (!members.map((m) => m.email).includes(createBy.email)) {
-        setMembers((prevMembers) => [...prevMembers, createBy]);
+        const updated = [...members, createBy];
+        setMembers(updated);
+        updateMemberCreateList(updated);
       }
     };
     fetching();
-    console.log("memberList", members);
   }, []);
 
-  // Hàm thêm thành viên mới
   const handleAddMember = () => {
-    // Kiểm tra định dạng email bằng regex
     const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    // Kiểm tra nếu email hợp lệ và chưa có trong danh sách members
     if (
       emailRegex.test(memberEmail) &&
       !members.map((m) => m.email).includes(memberEmail)
     ) {
-      setMembers((prevMembers) => [
-        ...prevMembers,
-        { email: memberEmail, roleName: ["user"] },
-      ]);
+      const updated = [...members, { email: memberEmail, roleName: ["user"] }];
+      setMembers(updated);
+      updateMemberCreateList(updated);
       ToastAndroid.show("Member added successfully", ToastAndroid.SHORT);
       setMemberEmail("");
     } else {
@@ -72,29 +81,47 @@ const CreateProject = () => {
     }
   };
 
-  // Hàm xử lý tạo dự án
+  const handleAssignRole = (email: IAddUser) => {
+    const updatedMembers = members.map((member) => {
+      if (member.email === email.email && email.email !== createby) {
+        const newRole = member.roleName.includes("admin")
+          ? ["user"]
+          : ["admin", "user"];
+        return { ...member, roleName: newRole };
+      }
+      return member;
+    });
+    setMembers(updatedMembers);
+    updateMemberCreateList(updatedMembers);
+  };
+
+  const handleRemoveMember = (index: number) => {
+    const newMembers = [...members];
+    newMembers.splice(index, 1);
+    setMembers(newMembers);
+    updateMemberCreateList(newMembers);
+  };
+
   const handleCreateProject = async () => {
-    // Xử lý logic tạo dự án ở đây
     if (projectName === "" || description === "" || members.length === 0) {
-      // Kiểm tra nếu các trường thông tin không hợp lệ
       ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
     } else if (isLimitDate && dayjs(date).isBefore(dayjs())) {
-      // Kiểm tra nếu ngày kết thúc không hợp lệ
       ToastAndroid.show("End date must be after today", ToastAndroid.SHORT);
     } else if (!members.some((item) => item.roleName.includes("admin"))) {
       ToastAndroid.show("At least one admin is required", ToastAndroid.SHORT);
     } else {
       try {
         const token = (await SecureStore.getItemAsync("token")) as string;
-        if (!isLimitDate) {
-          setDate(dayjs("20/12/2999").toISOString());
-        }
+        const deadline = isLimitDate
+          ? dayjs(date).toISOString()
+          : dayjs("2999-12-20").toISOString();
+
         const res = await axios.post(
           `${process.env.EXPO_PUBLIC_API_URL}/projects`,
           {
             name: projectName,
             description: description,
-            endDate: dayjs(date).toISOString(),
+            endDate: deadline,
             startDate: dayjs().toISOString(),
           },
           {
@@ -104,25 +131,13 @@ const CreateProject = () => {
             },
           }
         );
-        console.log(res.data);
-        if (res) {
-          console.log(
-            `Create project: ,${process.env.EXPO_PUBLIC_API_URL}/projects`
-          );
-        }
-        const memberList = members.flatMap((item) =>
-          item.roleName.map((role) => ({
-            email: item.email,
-            roleName: role,
-          }))
-        );
-        setMemberCreate(memberList);
-        console.log("memberList", memberCreate);
-        console.log(
-          `Create project: ,${process.env.EXPO_PUBLIC_API_URL}/projects/${res.data.id}/members`
-        );
 
-        const member = await axios.put(
+        if (memberCreate.length === 0) {
+          ToastAndroid.show("Please add members", ToastAndroid.SHORT);
+          return;
+        }
+
+        await axios.put(
           `${process.env.EXPO_PUBLIC_API_URL}/projects/${res.data.id}/members`,
           {
             membersList: memberCreate,
@@ -134,42 +149,21 @@ const CreateProject = () => {
             },
           }
         );
-        if (res && member) {
-          ToastAndroid.show("Project created successfully", ToastAndroid.SHORT);
-          router.replace({
-            pathname: "/dashboard",
-            params: { refresh: "true" },
-          });
-        }
-      } catch (error) {
-        console.log("Error creating project:", error);
+
+        ToastAndroid.show("Project created successfully", ToastAndroid.SHORT);
+        router.replace({
+          pathname: "/dashboard",
+          params: { refresh: "true" },
+        });
+      } catch (error: any) {
+        console.log("Error creating project:", error?.response?.data || error);
         ToastAndroid.show("Failed to create project", ToastAndroid.SHORT);
       }
     }
   };
 
-  const handleAssignRole = (email: IAddUser) => {
-    const updatedMembers = members.map((member) => {
-      if (member.email === email.email && email.email !== createby) {
-        const newRole = member.roleName.includes("admin")
-          ? ["user"]
-          : ["admin", "user"];
-        return { ...member, role: newRole };
-      } else {
-        ToastAndroid.show(
-          "You can't assign role to yourself",
-          ToastAndroid.SHORT
-        );
-      }
-      return member;
-    });
-    setMembers(updatedMembers);
-    console.log("Updated members:", updatedMembers);
-  };
-
   return (
     <View className="flex-1 bg-[#1D2760]">
-      {/* Nền gradient */}
       <LinearGradient
         className="absolute top-0 left-0 w-full h-full"
         colors={["#FFFFFF", "#C5C8DD", "#9EA4CB", "#606BAF", "#1D2760"]}
@@ -178,18 +172,15 @@ const CreateProject = () => {
         end={{ x: 0.5, y: 0 }}
       />
 
-      {/* Header với nút quay lại */}
       <BackButton />
-      <View className="flex-row items-center mx-auto h-fit p-3 my-10 w-fit px-5 bg-[#496FCF] rounded-full">
-        <Text className="text-white text-xl font-bold ">
+      <View className="flex-row items-center mx-auto my-10 px-5 bg-[#496FCF] rounded-full">
+        <Text className="text-white text-xl font-bold py-3">
           Create New Project
         </Text>
       </View>
 
-      {/* Form tạo dự án */}
       <ScrollView className="flex-1 bg-[#1D2760] rounded-t-[40px] px-6 py-8">
         <View className="flex-col mt-4 gap-6">
-          {/* Tên dự án */}
           <View className="flex-col gap-2">
             <Text className="text-white text-lg mb-2">Project Name</Text>
             <TextInput
@@ -201,14 +192,12 @@ const CreateProject = () => {
             />
           </View>
 
-          {/* Ngày kết thúc */}
           <View className="flex-row items-center justify-between my-3 gap-5">
             <Text className="text-white text-lg mb-2">End Date</Text>
             <Toggle value={isLimitDate} onValueChange={setIsLimitDate} />
           </View>
           {isLimitDate && <CalendarPicker date={date} onDateChange={setDate} />}
 
-          {/* Thêm thành viên */}
           <View className="flex-col gap-2">
             <Text className="text-white text-lg mb-2">Add Members</Text>
             <View className="flex-row items-center gap-2">
@@ -227,7 +216,6 @@ const CreateProject = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Danh sách thành viên đã thêm */}
             <View className="mt-2">
               {members.map((email, index) => (
                 <View
@@ -243,36 +231,32 @@ const CreateProject = () => {
                         );
                         return;
                       }
-
-                      const newMembers = [...members];
-                      newMembers.splice(index, 1);
-                      setMembers(newMembers);
+                      handleRemoveMember(index);
                     }}
                   >
                     <AntDesign name="close" size={20} color="white" />
                   </TouchableOpacity>
+
                   <Text className="text-white font-medium">{email.email}</Text>
 
                   <View className="flex-row flex-wrap gap-2 w-[100px] justify-end">
                     {email.roleName.map((role, roleIndex) => (
-                      <View key={roleIndex}>
-                        <Text
-                          className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                            role.includes("admin")
-                              ? "text-white bg-red-500"
-                              : "text-white bg-blue-500"
-                          }`}
-                        >
-                          {role.toUpperCase()}
-                        </Text>
-                      </View>
+                      <Text
+                        key={roleIndex}
+                        className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                          role.includes("admin")
+                            ? "text-white bg-red-500"
+                            : "text-white bg-blue-500"
+                        }`}
+                      >
+                        {role.toUpperCase()}
+                      </Text>
                     ))}
-
-                    {/* Nếu không có role user hoặc admin */}
                   </View>
+
                   <TouchableOpacity onPress={() => handleAssignRole(email)}>
                     {email.roleName.includes("admin") ? (
-                      <AntDesign name="downcircle" size={24} color="blue-500" />
+                      <AntDesign name="downcircle" size={24} color="blue" />
                     ) : (
                       <AntDesign name="upcircle" size={24} color="red" />
                     )}
@@ -282,7 +266,6 @@ const CreateProject = () => {
             </View>
           </View>
 
-          {/* Mô tả dự án */}
           <View className="flex-col gap-2">
             <Text className="text-white text-lg mb-2">Project Description</Text>
             <TextInput
@@ -296,7 +279,6 @@ const CreateProject = () => {
             />
           </View>
 
-          {/* Nút tạo dự án */}
           <TouchableOpacity
             onPress={handleCreateProject}
             className="bg-[#2f3f96] p-4 rounded-full mt-6"

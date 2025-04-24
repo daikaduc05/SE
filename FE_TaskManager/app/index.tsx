@@ -10,17 +10,14 @@ export default function Index() {
     router.push("/login");
     // width.value = width.value + 100
   };
-  const handleSignUp = () => {
+  const handleSignUp = () => {  
     router.push("/signup");
   };
 
   useEffect(() => {
-    console.log(process.env.EXPO_PUBLIC_API_URL)
-  
-  },[])
+    console.log(process.env.EXPO_PUBLIC_API_URL);
+  }, []);
 
-
-  
   return (
     <View className="w-full h-full flex items-center justify-center ">
       <LinearGradient
@@ -39,14 +36,8 @@ export default function Index() {
         </Text>
       </View>
       <View className="flex flex-row absolute bottom-10 items-center justify-around gap-3 mt-10 w-full">
-        <AuthenButton
-          text="Sign up"
-          onPress={handleSignUp}
-        />
-        <AuthenButton 
-          text="Sign in"
-          onPress={handleSignIn}
-        />
+        <AuthenButton text="Sign up" onPress={handleSignUp} />
+        <AuthenButton text="Sign in" onPress={handleSignIn} />
       </View>
     </View>
   );

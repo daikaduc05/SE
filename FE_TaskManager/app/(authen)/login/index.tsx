@@ -3,7 +3,7 @@ import AuthenButton from "@/common/Button";
 import InputLabel from "@/common/InputLabel";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, {  useState } from "react";
 import {
   Text,
   ToastAndroid,
@@ -11,8 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Keyboard,
-  KeyboardEvent,
+  // Keyboard,
+  // KeyboardEvent,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import axios from "axios";
@@ -22,32 +22,33 @@ const Index = () => {
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [message, setMessage] = useState("");
-  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  
+  // const [keyboardOffset, setKeyboardOffset] = useState(0);
 
-  useEffect(() => {
-    // const checkToken = async () => {
-    //   const token = await SecureStore.getItemAsync("token"); 
-    //   if (token) {
-    //     router.replace("/dashboard"); // Redirect to dashboard if token exists
-    //   }
-    // };
-    // checkToken();
+  // useEffect(() => {
+  //   // const checkToken = async () => {
+  //   //   const token = await SecureStore.getItemAsync("token"); 
+  //   //   if (token) {
+  //   //     router.replace("/dashboard"); // Redirect to dashboard if token exists
+  //   //   }
+  //   // };
+  //   // checkToken();
 
-    const keyboardDidShow = Keyboard.addListener(
-      "keyboardDidShow",
-      (e: KeyboardEvent) => {
-        setKeyboardOffset(e.endCoordinates.height);
-      }
-    );
-    const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardOffset(0);
-    });
+  //   const keyboardDidShow = Keyboard.addListener(
+  //     "keyboardDidShow",
+  //     (e: KeyboardEvent) => {
+  //       setKeyboardOffset(e.endCoordinates.height);
+  //     }
+  //   );
+  //   const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
+  //     setKeyboardOffset(0);
+  //   });
 
-    return () => {
-      keyboardDidShow.remove();
-      keyboardDidHide.remove();
-    };
-  }, []);
+  //   return () => {
+  //     keyboardDidShow.remove();
+  //     keyboardDidHide.remove();
+  //   };
+  // }, []);
 
   const handleSignIn = async () => {
     if (email === "" || password === "") {
@@ -66,7 +67,7 @@ const Index = () => {
       if (res) {
         await SecureStore.setItemAsync("token", res.data);
         ToastAndroid.show("Login successfully", ToastAndroid.SHORT);
-        router.push("/dashboard");
+        router.replace("/dashboard");
       }
     } catch (error) {
       console.log("Error during sign-in:", error);
@@ -86,11 +87,11 @@ const Index = () => {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          // paddingBottom: keyboardOffset,
+         
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <View className="flex-1 items-center justify-center">
+        <View className="flex-1 items-center  justify-center">
           <BackButton />
 
           <LinearGradient
@@ -101,12 +102,12 @@ const Index = () => {
             end={{ x: 0.5, y: 0 }}
           />
 
-          <View className="h-[60%] bg-white w-full flex-col  items-center rounded-tl-[100px] justify-start gap-10 absolute bottom-0 py-14 ">
+          <View className="h-[70%] bg-white w-full flex-col  items-center rounded-tl-[100px] justify-start gap-10 absolute bottom-0 py-14 ">
             <Text className="text-[28px] font-bold text-[#4737A5] tracking-[3px]">
               Welcome Back
             </Text>
 
-            <View className="w-full flex flex-col gap-6">
+            <View className="w-full flex flex-col gap-6 my-auto">
               <InputLabel
                 title="Email"
                 placeholder="Enter your email"

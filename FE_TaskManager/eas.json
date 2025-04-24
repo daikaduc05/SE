@@ -6,13 +6,40 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "@EXPO_PUBLIC_API_URL",
+        "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "@NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
+        "NEXT_PUBLIC_CLOUDINARY_API_KEY": "@NEXT_PUBLIC_CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET": "@CLOUDINARY_API_SECRET"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "@EXPO_PUBLIC_API_URL",
+        "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "@NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
+        "NEXT_PUBLIC_CLOUDINARY_API_KEY": "@NEXT_PUBLIC_CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET": "@CLOUDINARY_API_SECRET"
+      }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "@EXPO_PUBLIC_API_URL",
+        "NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME": "@NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME",
+        "NEXT_PUBLIC_CLOUDINARY_API_KEY": "@NEXT_PUBLIC_CLOUDINARY_API_KEY",
+        "CLOUDINARY_API_SECRET": "@CLOUDINARY_API_SECRET"
+      }
     }
   },
   "submit": {

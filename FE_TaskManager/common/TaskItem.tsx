@@ -8,34 +8,36 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import { router } from "expo-router";
+
+interface TaskItemProps {
+  task: ITaskFull;
+  onToggle: (id: string) => void;
+  setIsVisible: (visible: boolean) => void;
+  setTaskId: (id: string) => void;
+  projectId: string;
+}
 
 const TaskItem = ({
   task,
   onToggle,
   setIsVisible,
   setTaskId,
-  onEdit,
-}: {
-  task: ITaskFull;
-  onToggle: (id: string) => void;
-  setIsVisible: (visible: boolean) => void;
-  setTaskId: (id: string) => void;
-  onEdit: (id: string) => void;
-}) => {
+  projectId,
+}: TaskItemProps) => {
   const pan = useRef(new Animated.ValueXY()).current;
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dx) > 10,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove: Animated.event([null, { dx: pan.x }], {
         useNativeDriver: false,
       }),
-      onPanResponderRelease: (e, gestureState) => {
+      onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dx > 120) {
           onToggle(task.id);
         }
-
         Animated.spring(pan, {
           toValue: { x: 0, y: 0 },
           useNativeDriver: true,
@@ -47,28 +49,30 @@ const TaskItem = ({
   const getPriorityColor = (priority: string) => {
     switch (priority.toLowerCase()) {
       case "medium":
-        return "#22c55e"; // green
+        return "#22c55e";
       case "important":
-        return "#facc15"; // yellow
+        return "#facc15";
       case "warning":
-        return "#ef4444"; // red
+        return "#ef4444";
       default:
-        return "#d1d5db"; // gray fallback
+        return "#d1d5db";
     }
   };
 
   return (
-    <Animated.View
-      {...panResponder.panHandlers}
-      style={[
-        styles.container,
-        {
-          transform: [{ translateX: pan.x }],
-        },
-      ]}
-    >
-      <View style={styles.contentWrapper}>
-        <View style={{ flex: 1 }}>
+    <View style={styles.wrapper}>
+      {/* Vùng chứa toàn bộ task + action */}
+      <View style={styles.rowContainer}>
+        {/* VÙNG SWIPE (bên trái) */}
+        <Animated.View
+          {...panResponder.panHandlers}
+          style={[
+            styles.swipeableContainer,
+            {
+              transform: [{ translateX: pan.x }],
+            },
+          ]}
+        >
           <Text style={styles.taskName}>{task.taskName}</Text>
 
           <View
@@ -79,7 +83,9 @@ const TaskItem = ({
           >
             <Text
               style={
-                task.state === "Done" ? styles.doneText : styles.notDoneText
+                task.state === "Done"
+                  ? styles.doneText
+                  : styles.notDoneText
               }
             >
               {task.state}
@@ -100,48 +106,58 @@ const TaskItem = ({
             />
             <Text style={styles.priorityText}>{task.priority}</Text>
           </View>
-        </View>
+        </Animated.View>
 
-        <View className="w-[50px] flex-col justify-evenly gap-6" style={styles.actions}>
-          <TouchableOpacity 
-          className="w-full"
+        {/* VÙNG NÚT CỐ ĐỊNH (bên phải) */}
+        <View style={styles.actions}>
+          <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: "#3B82F6" }]}
-            onPress={() => onEdit(task.id)}
+            onPress={() =>
+              router.push({
+                pathname: "/dashboard/project/[project]/task/[id]",
+                params: { project: projectId, id: task.id },
+              })
+            }
           >
-            <Text className="text-center" style={styles.actionText}>Edit</Text>
+            <Text style={styles.actionText}>Edit</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-          className="w-full"
             style={[styles.actionBtn, { backgroundColor: "#DC2626" }]}
             onPress={() => {
-              setIsVisible(true);
               setTaskId(task.id);
+              setIsVisible(true);
             }}
           >
             <Text style={styles.actionText}>Delete</Text>
           </TouchableOpacity>
+
+        
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
+  wrapper: {
     marginBottom: 16,
+    paddingHorizontal: 10,
+  },
+  rowContainer: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 12,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 4,
+    overflow: "hidden",
   },
-  contentWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+  swipeableContainer: {
+    flex: 1,
+    padding: 16,
   },
   taskName: {
     color: "#1D2760",
@@ -152,12 +168,12 @@ const styles = StyleSheet.create({
   stateContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
     alignSelf: "flex-start",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 9999,
     marginBottom: 8,
+    gap: 8,
   },
   doneAt: {
     color: "#9CA3AF",
@@ -195,20 +211,23 @@ const styles = StyleSheet.create({
     textTransform: "capitalize",
   },
   actions: {
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "flex-end",
-    gap: 8,
-    marginLeft: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F3F4F6", // ✅ Gợi ý: gray-100
   },
+  
   actionBtn: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 20,
+    borderRadius: 12,
+    marginBottom: 8,
   },
   actionText: {
     color: "#fff",
     fontWeight: "600",
+    textAlign: "center",
   },
 });
 

@@ -84,7 +84,9 @@ const EditProject = () => {
             },
           }
         );
-        // console.log("Project members:", emails.data);
+
+        console.log("Project members:", emails.data);
+      
         const memberEdit: IEditUser[] = emails.data.flatMap((item: IProjects_member) =>
           item.roles.map((role) => ({
             email: item.email,
@@ -92,7 +94,7 @@ const EditProject = () => {
           }))
         );
         setMembersList(memberEdit);
-        console.log("Project members:", memberEdit);
+        // console.log("Project members:", memberEdit);
         // console.log("Project membersss2:", emails.data);
         setMembers(
           emails.data.map((item: any) => {
@@ -155,7 +157,7 @@ const EditProject = () => {
             },
           }
         );
-        console.log("data:", membersList);
+        // console.log("data:", membersList);
 
         const member = await axios.put(
           `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}/members`,
@@ -223,7 +225,7 @@ const EditProject = () => {
     });
   
     setMembers(updatedMembers);
-   console.log("membersList", membersList);
+  //  console.log("membersList", membersList);
   };
   
   
@@ -239,7 +241,7 @@ const EditProject = () => {
     setMembers(newMembers);
     const newMembersList = membersList.filter((m) => m.email !== email);
     setMembersList(newMembersList);
-    console.log("membersList", membersList);
+    // console.log("membersList", membersList);
   }
 
   return (

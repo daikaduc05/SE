@@ -1,13 +1,22 @@
-import { Stack, router } from "expo-router";
-import { useEffect, useState } from "react";
-import * as SecureStore from "expo-secure-store";
-import { View, ActivityIndicator } from "react-native";
+import { Stack } from "expo-router";
+
 import "../global.css";
 
+import * as Notifications from "expo-notifications";
+import { NotificationProvider } from "@/context/NotificationContext";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
 export default function RootLayout() {
-
-
-
-
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <NotificationProvider>
+      <Stack screenOptions={{ headerShown: false }} />
+    </NotificationProvider>
+  );
 }
