@@ -165,7 +165,10 @@ export class ProjectsService {
   }
 
   async assignTask(taskId: number, emails: string[]): Promise<TaskUser[] | null> {
-    const task = await this.findOneTask(taskId);
+    const task = await this.taskRepository.findOne({
+      where: { id: taskId },
+      relations: ['project'],
+    });
     const users = await this.userService.findByEmails(emails);
     if (!task) throw NotFoundException;
     if (!users) throw UnauthorizedException;
