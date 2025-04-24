@@ -36,10 +36,11 @@ export class ProjectsController {
   async updateMemberToProject(
     @Param('projectId') projectId: number,
     @Body() body: UpdateMemberProjectDtoRequest,
+    @Request() req: CustomRequest,
   ) {
     this.logger.log('[Start Controller] updateMemberToProject');
     this.logger.log(body);
-    return await this.projectsService.updateUserProject(projectId, body.membersList);
+    return await this.projectsService.updateUserProject(projectId, body.membersList, req.userId);
   }
 
   @Roles(RoleEnum.Admin, RoleEnum.User)
@@ -72,10 +73,11 @@ export class ProjectsController {
     @Param('projectId') projectId: number,
     @Param('taskId') taskId: number,
     @Body() body: AssignTaskDto,
+    @Request() req: CustomRequest,
   ) {
     this.logger.log('[Start Controller] assignTask');
     this.logger.log(body);
-    return await this.projectsService.assignTask(taskId, body.emails);
+    return await this.projectsService.assignTask(taskId, body.emails, req.userId);
   }
 
   @Roles(RoleEnum.User, RoleEnum.Admin)
@@ -91,9 +93,13 @@ export class ProjectsController {
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Put('/:projectId/')
-  async updateProject(@Param('projectId') projectId: number, @Body() updateData: UpdateProjectDto) {
+  async updateProject(
+    @Param('projectId') projectId: number,
+    @Body() updateData: UpdateProjectDto,
+    @Request() req: CustomRequest,
+  ) {
     this.logger.log('[Start Controller] updateProject');
-    return await this.projectsService.updateProject(projectId, updateData);
+    return await this.projectsService.updateProject(projectId, updateData, req.userId);
   }
 
   @Roles(RoleEnum.Admin, RoleEnum.User)

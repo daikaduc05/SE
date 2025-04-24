@@ -97,6 +97,7 @@ export class ProjectsService {
   async updateUserProject(
     projectId: number,
     updateMemberProject: UpdateMemberProjectDto[],
+    userId: number,
   ): Promise<boolean> {
     const project = await this.findOneProject(projectId);
     const user = await this.userService.findByEmails(updateMemberProject.map((item) => item.email));
@@ -117,7 +118,11 @@ export class ProjectsService {
       newRoleUserProject.user = user[i];
       newRoleUserProject.role = role[i];
       await this.roleUserProjectRepository.save(newRoleUserProject);
-      if (!existingUserIds.includes(user[i].id) && !notifiedUserIds.has(user[i].id)) {
+      if (
+        !existingUserIds.includes(user[i].id) &&
+        !notifiedUserIds.has(user[i].id) &&
+        user[i].id != userId
+      ) {
         await this.userService.sendNotification(
           user[i].id,
           `You have been added to the project: ${project.name}`,
@@ -141,10 +146,14 @@ export class ProjectsService {
     const user = await this.userService.findOne(userId);
     if (!user) throw UnauthorizedException;
     await this.projectRepository.save(newProject);
-    await this.updateUserProject(newProject.id, [
-      { email: user.email, roleName: RoleEnum.Admin },
-      { email: user.email, roleName: RoleEnum.User },
-    ]);
+    await this.updateUserProject(
+      newProject.id,
+      [
+        { email: user.email, roleName: RoleEnum.Admin },
+        { email: user.email, roleName: RoleEnum.User },
+      ],
+      userId,
+    );
     return newProject;
   }
 
@@ -166,7 +175,7 @@ export class ProjectsService {
     return await this.taskRepository.save(newTask);
   }
 
-  async assignTask(taskId: number, emails: string[]): Promise<TaskUser[] | null> {
+  async assignTask(taskId: number, emails: string[], userId: number): Promise<TaskUser[] | null> {
     const task = await this.taskRepository.findOne({
       where: { id: taskId },
       relations: ['project'],
@@ -185,13 +194,14 @@ export class ProjectsService {
       taskUser.user = user;
       taskUser.assignTime = new Date();
       taskUsers.push(taskUser);
-      await this.userService.sendNotification(
-        user.id,
-        `You have been assigned to a new task: ${task.taskName}`,
-        TypeNotiEnum.Task,
-        task.project.id,
-        task.id,
-      );
+      if (user.id != userId)
+        await this.userService.sendNotification(
+          user.id,
+          `You have been assigned to a new task: ${task.taskName}`,
+          TypeNotiEnum.Task,
+          task.project.id,
+          task.id,
+        );
     }
     return await this.taskUserRespotiry.save(taskUsers);
   }
@@ -235,19 +245,21 @@ export class ProjectsService {
   async updateProject(
     projectId: number,
     updateData: Partial<CreateProjectDto>,
+    userId: number,
   ): Promise<Project | null> {
     const project = await this.findOneProject(projectId);
     if (!project) throw NotFoundException;
     const userList = await this.findUserByProject(projectId);
     if (userList)
       for (const user of userList) {
-        await this.userService.sendNotification(
-          user.id,
-          `The project ${project.name} has been updated`,
-          TypeNotiEnum.Project,
-          project.id,
-          0,
-        );
+        if (user.id != userId)
+          await this.userService.sendNotification(
+            user.id,
+            `The project ${project.name} has been updated`,
+            TypeNotiEnum.Project,
+            project.id,
+            0,
+          );
       }
     Object.assign(project, updateData);
     return await this.projectRepository.save(project);
@@ -261,19 +273,22 @@ export class ProjectsService {
     const user = await this.userService.findOne(userId);
     const task = await this.taskRepository.findOne({
       where: { id: taskId },
-      relations: ['taskUsers.user', 'project'],
+      relations: ['taskUsers.user', 'createdBy'],
     });
     if (!user) throw UnauthorizedException;
     if (!task) throw NotFoundException;
-    if (!task.taskUsers.some((item) => item.user.id == user.id)) throw UnauthorizedException;
-    for (const user of task.taskUsers) {
-      await this.userService.sendNotification(
-        user.user.id,
-        `The task ${task.taskName} has been updated`,
-        TypeNotiEnum.Task,
-        task.project.id,
-        task.id,
-      );
+
+    if (!task.taskUsers.some((item) => item.user.id == user.id) && user.id != task.createdBy.id)
+      throw UnauthorizedException;
+    for (const taskUser of task.taskUsers) {
+      if (taskUser.user.id != user.id)
+        await this.userService.sendNotification(
+          taskUser.user.id,
+          `The task ${task.taskName} has been updated`,
+          TypeNotiEnum.Task,
+          task.project.id,
+          task.id,
+        );
     }
     Object.assign(task, updateData);
     return await this.taskRepository.save(task);
