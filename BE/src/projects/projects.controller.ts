@@ -22,7 +22,7 @@ export class ProjectsController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Post('/')
+  @Post()
   async createProject(@Body() project: CreateProjectDto, @Request() req: CustomRequest) {
     this.logger.log('[Start Controller] createProject');
     return await this.projectsService.createProject(project, req.userId);
@@ -146,9 +146,11 @@ export class ProjectsController {
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Delete('/:projectId/tasks/:taskId')
-  async deleteTask(@Param('taskId') taskId: number, @Param('projectId') projectId: number) {
+  async deleteTask(
+    @Param('taskId') taskId: number,
+    @Param('projectId') __projectId: number, // eslint-disable-line @typescript-eslint/no-unused-vars
+  ) {
     this.logger.log('[Start Controller] deleteTask');
-    console.log(taskId, projectId);
     await this.projectsService.deleteTask(taskId);
     return { message: 'Task deleted successfully' };
   }

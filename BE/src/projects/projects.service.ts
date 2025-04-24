@@ -181,12 +181,18 @@ export class ProjectsService {
       relations: ['project'],
     });
     const users = await this.userService.findByEmails(emails);
-    if (!task) throw NotFoundException;
-    if (!users) throw UnauthorizedException;
+    if (!task) throw new NotFoundException('Task not found');
+    if (!users) throw new NotFoundException('User not found');
     const oldTaskUsers = await this.taskUserRespotiry.find({
       where: { task: task },
     });
     if (oldTaskUsers) await this.taskUserRespotiry.remove(oldTaskUsers);
+    for (const user of users) {
+      const isUser = await this.roleUserProjectRepository.exists({
+        where: { user: user, project: task.project },
+      });
+      if (!isUser) throw new NotFoundException('User not found');
+    }
     const taskUsers: TaskUser[] = [];
     for (const user of users) {
       const taskUser = new TaskUser();
@@ -276,10 +282,10 @@ export class ProjectsService {
       relations: ['taskUsers.user', 'createdBy'],
     });
     if (!user) throw UnauthorizedException;
-    if (!task) throw NotFoundException;
+    if (!task) throw new NotFoundException('Task not found');
 
     if (!task.taskUsers.some((item) => item.user.id == user.id) && user.id != task.createdBy.id)
-      throw UnauthorizedException;
+      throw new UnauthorizedException('You are not authorized to update this task');
     for (const taskUser of task.taskUsers) {
       if (taskUser.user.id != user.id)
         await this.userService.sendNotification(
