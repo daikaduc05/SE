@@ -261,13 +261,11 @@ export class ProjectsService {
     const user = await this.userService.findOne(userId);
     const task = await this.taskRepository.findOne({
       where: { id: taskId },
-      relations: ['taskUsers.user', 'createdBy'],
+      relations: ['taskUsers.user', 'project'],
     });
     if (!user) throw UnauthorizedException;
     if (!task) throw NotFoundException;
-    this.logger.log(task.createdBy);
-    this.logger.log(user);
-    if (user.id != task.createdBy.id) throw UnauthorizedException;
+    if (!task.taskUsers.some((item) => item.user.id == user.id)) throw UnauthorizedException;
     for (const user of task.taskUsers) {
       await this.userService.sendNotification(
         user.user.id,
