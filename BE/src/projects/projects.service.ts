@@ -18,7 +18,6 @@ import { TaskUser } from './entities/task-user.entity';
 import { StateEnum } from 'src/enum/state.enum';
 import { ProjectByUserDto } from './dto/project-by-user.dto';
 import { UserWithRoleDto } from './dto/user-with-role.dto';
-import { TaskResponseDto, AssignedUserDto } from './dto/task-response.dto';
 import { UpdateMemberProjectDto } from './dto/add-member.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TypeNotiEnum } from 'src/enum/typeNoti.enum';
@@ -78,11 +77,27 @@ export class ProjectsService {
     return projects;
   }
 
-  async findOneTask(id: number): Promise<Task | null> {
-    return await this.taskRepository.findOne({
-      where: { id },
+  async findOneTask(id: number, projectId: number): Promise<Task | null> {
+    const task = await this.taskRepository.findOne({
+      where: { id, project: { id: projectId } },
       relations: ['taskUsers.user', 'createdBy'],
     });
+    this.logger.log(task);
+    if (!task) throw new NotFoundException('Task not found');
+    return task;
+  }
+
+  async findMyTask(projectId: number, userId: number): Promise<Task[] | null> {
+    const project = await this.findOneProject(projectId);
+    if (!project) throw new NotFoundException('Project not found');
+    const user = await this.userService.findOne(userId);
+    if (!user) throw new NotFoundException('User not found');
+    const tasks = await this.taskRepository.find({
+      where: { project: project },
+      relations: ['createdBy', 'taskUsers', 'taskUsers.user'],
+    });
+    const myTask = tasks.filter((task) => task.taskUsers.some((item) => item.user.id == user.id));
+    return myTask;
   }
 
   async findRoleProjectUser(projectId: number, userId: number): Promise<RoleUserProject[] | null> {
@@ -172,7 +187,13 @@ export class ProjectsService {
     newTask.description = task.description;
     newTask.createdTime = new Date();
     newTask.project = project;
-    return await this.taskRepository.save(newTask);
+    await this.taskRepository.save(newTask);
+    const taskUser = new TaskUser();
+    taskUser.task = newTask;
+    taskUser.user = user;
+    taskUser.assignTime = new Date();
+    await this.taskUserRespotiry.save(taskUser);
+    return newTask;
   }
 
   async assignTask(taskId: number, emails: string[], userId: number): Promise<TaskUser[] | null> {
@@ -279,13 +300,11 @@ export class ProjectsService {
     const user = await this.userService.findOne(userId);
     const task = await this.taskRepository.findOne({
       where: { id: taskId },
-      relations: ['taskUsers.user', 'createdBy'],
+      relations: ['taskUsers.user', 'createdBy', 'project'],
     });
     if (!user) throw UnauthorizedException;
     if (!task) throw new NotFoundException('Task not found');
 
-    if (!task.taskUsers.some((item) => item.user.id == user.id) && user.id != task.createdBy.id)
-      throw new UnauthorizedException('You are not authorized to update this task');
     for (const taskUser of task.taskUsers) {
       if (taskUser.user.id != user.id)
         await this.userService.sendNotification(
@@ -300,7 +319,7 @@ export class ProjectsService {
     return await this.taskRepository.save(task);
   }
 
-  async findTasksByProjectId(projectId: number): Promise<TaskResponseDto[] | null> {
+  async findTasksByProjectId(projectId: number): Promise<Task[] | null> {
     const project = await this.findOneProject(projectId);
     if (!project) throw new NotFoundException('Project not found');
 
@@ -309,41 +328,7 @@ export class ProjectsService {
       relations: ['createdBy', 'taskUsers', 'taskUsers.user'],
     });
 
-    const taskMap = new Map<number, TaskResponseDto>();
-
-    tasks.forEach((task) => {
-      if (!taskMap.has(task.id)) {
-        taskMap.set(task.id, {
-          id: task.id,
-          taskName: task.taskName,
-          description: task.description,
-          createdTime: task.createdTime,
-          deadline: task.deadline,
-          doneAt: task.doneAt,
-          priority: task.priority,
-          state: task.state,
-          createdBy: {
-            id: task.createdBy.id,
-            name: task.createdBy.name,
-            email: task.createdBy.email,
-          },
-          assignedUsers: [],
-        });
-      }
-
-      const taskDto = taskMap.get(task.id);
-      task.taskUsers.forEach((taskUser) => {
-        const assignedUser: AssignedUserDto = {
-          id: taskUser.user.id,
-          name: taskUser.user.name,
-          email: taskUser.user.email,
-          assignedTime: taskUser.assignTime,
-        };
-        taskDto?.assignedUsers.push(assignedUser);
-      });
-    });
-
-    return Array.from(taskMap.values());
+    return tasks;
   }
 
   async deleteTask(taskId: number): Promise<void> {
