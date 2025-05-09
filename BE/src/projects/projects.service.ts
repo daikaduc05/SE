@@ -127,7 +127,9 @@ export class ProjectsService {
     const existingUserIds = existingUsers.map((item) => item.user.id);
     const notifiedUserIds = new Set<number>();
     await this.roleUserProjectRepository.delete({ project: project });
+    const userIdsInProject = new Set<number>();
     for (let i = 0; i < updateMemberProject.length; i++) {
+      userIdsInProject.add(user[i].id);
       const newRoleUserProject = new RoleUserProject();
       newRoleUserProject.project = project;
       newRoleUserProject.user = user[i];
@@ -149,6 +151,15 @@ export class ProjectsService {
       }
       this.logger.log(newRoleUserProject);
     }
+    const curentTask: Task[] | null = await this.findTasksByProjectId(projectId);
+    if (curentTask) {
+      for (let i = 0; i < curentTask?.length; i++) {
+        if (!userIdsInProject.has(curentTask[i].createdBy.id)) {
+          await this.deleteTask(curentTask[i].id);
+        }
+      }
+    }
+
     return true;
   }
 
@@ -249,7 +260,6 @@ export class ProjectsService {
           const roleName = item.role.name;
 
           if (!acc[id]) {
-            // Nếu chưa có đối tượng với id này, tạo mới
             acc[id] = {
               id,
               name,
