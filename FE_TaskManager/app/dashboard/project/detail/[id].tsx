@@ -27,7 +27,7 @@ const DetailProject = () => {
     const fetchProjectDetail = async () => {
       try {
         const res = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${id}`,
           {
             headers: {
               Authorization: `Bearer ${await SecureStore.getItemAsync(
@@ -39,7 +39,7 @@ const DetailProject = () => {
         );
         setProjectDetailt(res.data);
         const emails = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}/members`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${id}/members`,
           {
             headers: {
               Authorization: `Bearer ${await SecureStore.getItemAsync(
@@ -49,7 +49,6 @@ const DetailProject = () => {
             },
           }
         );
-
         setEmailList(emails.data);
         console.log("Project members:", emailList);
       } catch (error) {

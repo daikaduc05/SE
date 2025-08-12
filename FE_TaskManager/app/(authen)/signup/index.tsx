@@ -58,7 +58,7 @@ const Signup = () => {
     } else {
       try {
         const res = await axios.post(
-          `${process.env.EXPO_PUBLIC_API_URL}/users`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users`,
           {
             name: fullName,
             email: email,
@@ -81,7 +81,10 @@ const Signup = () => {
           console.log("Sign up failed");
         }
       } catch (error) {
-        console.log("Error:", error);
+        ToastAndroid.show(
+          "Sign up failed, please try again later",
+          ToastAndroid.SHORT
+        );
       }
     }
   };

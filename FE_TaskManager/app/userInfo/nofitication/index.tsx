@@ -37,7 +37,7 @@ const NotificationScreen = () => {
       try {
         const token = await SecureStore.getItemAsync("token");
         const res = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/users/notifications`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/notifications`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -77,7 +77,7 @@ const NotificationScreen = () => {
 
     try {
       const res = await axios.delete(
-        `${process.env.EXPO_PUBLIC_API_URL}/users/notifications/${id}`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/notifications/${id}`,
         {
           headers: {
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
@@ -97,7 +97,7 @@ const NotificationScreen = () => {
   const toggleReadStatus = async (id: string) => {
     try {
       const res = await axios.put(
-        `${process.env.EXPO_PUBLIC_API_URL}/users/notifications/${id}`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/notifications/${id}`,
         {},
         {
           headers: {
@@ -121,7 +121,7 @@ const NotificationScreen = () => {
   const handleDeleteAllNotifications = async () => {
     try {
       const res = await axios.delete(
-        `${process.env.EXPO_PUBLIC_API_URL}/users/notifications`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/notifications`,
         {
           headers: {
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,

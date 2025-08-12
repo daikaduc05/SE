@@ -12,6 +12,7 @@ import axios from "axios";
 const CLOUD_NAME = "dqupovatf"; // ví dụ: "myapp123"
 const UPLOAD_PRESET = "demo_frame_print"; // ví dụ: "expo_upload"
 import * as SecureStore from "expo-secure-store";
+import { router } from "expo-router";
 
 export default function ImagePickerExample({
   setImage,
@@ -66,9 +67,10 @@ export default function ImagePickerExample({
         ToastAndroid.show("Upload successful!", ToastAndroid.SHORT);
         setImage(data.secure_url); // Gửi URL về component cha
         console.log("Cloudinary response:", data.secure_url);
+       
         try {
-          await axios.put(
-            `${process.env.EXPO_PUBLIC_API_URL}/users`,
+         const res =  await axios.put(
+            `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users`,
             {
               avatar: data.secure_url as string,
             },
@@ -81,6 +83,12 @@ export default function ImagePickerExample({
               },
             }
           );
+          if(res){
+            router.push({
+              pathname: "/dashboard",
+              params: { refresh: "true" },
+            });
+          }
         } catch (error) {
           console.error("Error setting image:", error);
           ToastAndroid.show("Error setting image", ToastAndroid.SHORT);

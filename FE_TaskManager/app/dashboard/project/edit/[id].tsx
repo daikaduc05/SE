@@ -55,7 +55,7 @@ const EditProject = () => {
       const token = (await SecureStore.getItemAsync("token")) as string;
       try {
         const res = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${id}`,
           {
             headers: {
               Authorization: `Bearer ${await SecureStore.getItemAsync(
@@ -66,9 +66,12 @@ const EditProject = () => {
           }
         );
 
-        if (res.data.endDate) {
+        if (res.data.endDate !== new Date("2999-12-20").toISOString()) {
           setIsLimitDate(true);
           setEndDate(res.data.endDate);
+        } else {
+          setIsLimitDate(false);
+          setEndDate(dayjs("2999-12-20").toISOString());
         }
         setProjectName(res.data.name);
         setDescription(res.data.description);
@@ -76,7 +79,7 @@ const EditProject = () => {
         // console.log(res.data);
 
         const emails = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}/members`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${id}/members`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -86,12 +89,13 @@ const EditProject = () => {
         );
 
         console.log("Project members:", emails.data);
-      
-        const memberEdit: IEditUser[] = emails.data.flatMap((item: IProjects_member) =>
-          item.roles.map((role) => ({
-            email: item.email,
-            roleName: role,
-          }))
+
+        const memberEdit: IEditUser[] = emails.data.flatMap(
+          (item: IProjects_member) =>
+            item.roles.map((role) => ({
+              email: item.email,
+              roleName: role,
+            }))
         );
         setMembersList(memberEdit);
         // console.log("Project members:", memberEdit);
@@ -125,7 +129,10 @@ const EditProject = () => {
       memberEmail.includes("@gmail.com")
     ) {
       setMembers([...members, { email: memberEmail, roleName: ["user"] }]);
-      setMembersList([...membersList, { email: memberEmail, roleName: "user" }]);  
+      setMembersList([
+        ...membersList,
+        { email: memberEmail, roleName: "user" },
+      ]);
       setMemberEmail("");
     } else {
       ToastAndroid.show("Invalid email", ToastAndroid.SHORT);
@@ -141,13 +148,13 @@ const EditProject = () => {
       const token = (await SecureStore.getItemAsync("token")) as string;
       try {
         const res = await axios.put(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${id}`,
           {
             name: projectName,
             description: description,
             endDate: isLimitDate
               ? dayjs(endDate).toISOString()
-              : dayjs("2999-12-30T17:33:58.292Z").toISOString(),
+              : dayjs("2999/12/20").toISOString(),
             startDate: dayjs(startDate).toISOString(),
           },
           {
@@ -160,7 +167,7 @@ const EditProject = () => {
         // console.log("data:", membersList);
 
         const member = await axios.put(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${id}/members`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${id}/members`,
           {
             membersList: membersList,
           },
@@ -183,6 +190,11 @@ const EditProject = () => {
           });
         }
       } catch (error) {
+        ToastAndroid.show("You must be admin to update project", ToastAndroid.SHORT);
+        router.replace({
+          pathname: "/dashboard/project/[project]",
+          params: { project: id, refresh: "true" },
+        });
         console.log("Error updating project:", error);
       }
     }
@@ -193,19 +205,19 @@ const EditProject = () => {
       ToastAndroid.show("You can't change your own role", ToastAndroid.SHORT);
       return;
     }
-  
+
     const updatedMembers = members.map((member) => {
       if (member.email === email.email) {
         const isAdmin = member.roleName.includes("admin");
-  
+
         const newRoles = isAdmin ? ["user"] : ["admin", "user"];
-  
+
         // Cập nhật danh sách editUser
         setMembersList((prev) => {
           const exists = prev.find(
             (item) => item.email === email.email && item.roleName === "admin"
           );
-  
+
           if (!isAdmin && !exists) {
             // THÊM admin nếu chưa có
             return [...prev, { email: email.email, roleName: "admin" }];
@@ -218,23 +230,19 @@ const EditProject = () => {
           }
           return prev;
         });
-  
+
         return { ...member, roleName: newRoles };
       }
       return member;
     });
-  
+
     setMembers(updatedMembers);
-  //  console.log("membersList", membersList);
+    //  console.log("membersList", membersList);
   };
-  
-  
+
   const handledeleteMember = (email: string) => {
-    if(email === createby) {
-      ToastAndroid.show(
-        "You can't remove yourself",
-        ToastAndroid.SHORT
-      );
+    if (email === createby) {
+      ToastAndroid.show("You can't remove yourself", ToastAndroid.SHORT);
       return;
     }
     const newMembers = members.filter((m) => m.email !== email);
@@ -242,7 +250,7 @@ const EditProject = () => {
     const newMembersList = membersList.filter((m) => m.email !== email);
     setMembersList(newMembersList);
     // console.log("membersList", membersList);
-  }
+  };
 
   return (
     <View className="flex-1 bg-[#1D2760]">
@@ -317,7 +325,9 @@ const EditProject = () => {
                   className="flex-row items-center justify-between bg-[#313384] p-4 rounded-full mt-2"
                 >
                   <TouchableOpacity
-                  onPress={() => {handledeleteMember(email.email)}}
+                    onPress={() => {
+                      handledeleteMember(email.email);
+                    }}
                   >
                     <AntDesign name="close" size={24} color="white" />
                   </TouchableOpacity>

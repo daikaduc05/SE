@@ -1,11 +1,3 @@
-import fs from "fs";
-
-// ✅ Ghi google-services.json nếu có từ env
-if (process.env.GOOGLE_SERVICES_JSON) {
-  const path = "./android/app/google-services.json";
-  fs.writeFileSync(path, process.env.GOOGLE_SERVICES_JSON);
-  console.log("✅ Wrote google-services.json from env 🎉");
-}
 
 export default () => ({
   expo: {
@@ -24,7 +16,6 @@ export default () => ({
 
     android: {
       package: "com.hadeptrai.FE_TaskManager",
-      googleServicesFile: "./google-services.json",
       adaptiveIcon: {
         foregroundImage: "./assets/images/adaptive-icon.png",
         backgroundColor: "#ffffff"
@@ -57,7 +48,8 @@ export default () => ({
           backgroundColor: "#ffffff"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+       "expo-av"
     ],
 
     experiments: {

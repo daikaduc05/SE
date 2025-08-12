@@ -45,7 +45,7 @@ const UserInfo = () => {
 
     try {
       const res = await axios.put(
-        `${process.env.EXPO_PUBLIC_API_URL}/users`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users`,
         user,
         {
           headers: {
@@ -58,6 +58,7 @@ const UserInfo = () => {
         setIsNotificationEnabled(user.notiSettings || true);
         ToastAndroid.show("Changes saved successfully", ToastAndroid.SHORT);
         console.log("Changes saved successfully:", res.data);
+        router.replace("/dashboard");
       } else {
         ToastAndroid.show("Changes saved failed", ToastAndroid.SHORT);
       }
@@ -73,7 +74,7 @@ const UserInfo = () => {
       const decoded = jwtDecode<{ id: string }>(token);
       try {
         const res = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/users/${decoded.id}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/${decoded.id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -93,12 +94,13 @@ const UserInfo = () => {
       }
     };
     fetchUserData();
-  }, []);
+  }, [avatar]);
+  
 
   const handleSaveNewPassword = async () => {
     try {
       const res = await axios.put(
-        `${process.env.EXPO_PUBLIC_API_URL}/users/password`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/password`,
         {
           oldPassword: currentPassword,
           newPassword: newPassword,
@@ -124,13 +126,13 @@ const UserInfo = () => {
 
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync("token");
-    router.push("/login");
+    router.replace("/")
   };
 
   const handleDeleteAccount = async () => {
     try {
       const res = await axios.delete(
-        `${process.env.EXPO_PUBLIC_API_URL}/users`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users`,
         {
           headers: {
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,

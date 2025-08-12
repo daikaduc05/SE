@@ -1,6 +1,6 @@
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Text,
   View,
@@ -10,9 +10,10 @@ import {
   ToastAndroid,
   Modal,
   Pressable,
+  BackHandler,
 } from "react-native";
 import * as SecureStore from "expo-secure-store";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import ClockLive from "@/common/ClockLive";
 import { jwtDecode } from "jwt-decode";
 import { IUser } from "@/model/IUser";
@@ -21,7 +22,6 @@ import { IProjects_Info } from "@/model/IProjects";
 import { useLocalSearchParams } from "expo-router";
 import { useNotification } from "@/context/NotificationContext";
 
-
 // Component chính cho Dashboard
 const Dashboard = () => {
   const { refresh } = useLocalSearchParams();
@@ -29,25 +29,40 @@ const Dashboard = () => {
   const [listProject, setListProject] = useState<IProjects_Info[]>();
   const [modalVisible, setModalVisible] = useState(false);
   const [projectIdToDelete, setProjectIdToDelete] = useState<string>("");
-  const { setIsNotificationEnabled} = useNotification()
- 
-  
+  const { setIsNotificationEnabled } = useNotification();
+  const [isToken, setIsToken] = useState("");
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        // Không cho back về login nếu đã login
+        return true; // chặn back
+      };
+
+      BackHandler.addEventListener("hardwareBackPress", onBackPress);
+
+      return () =>
+        BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+    }, [])
+  );
 
   // Fetch user and project data
   useEffect(() => {
     const getUser = async () => {
       const token = (await SecureStore.getItemAsync("token")) as string;
-      const decoded = jwtDecode<{ id: string }>(token); 
-      // console.log("Token:", token);
-        if (!token) {
-          ToastAndroid.show("Please login", ToastAndroid.SHORT);
+      const decoded = jwtDecode<{ id: string }>(token);
+      console.log("Decoded JWT:", decoded);
+      setIsToken(token);
+      console.log("Token:", token);
+      if (!token) {
+        ToastAndroid.show("Please login", ToastAndroid.SHORT);  
         alert("Please login");
         router.push("/login");
         return;
-      } else {  
+      } else {
         try {
           const res = await axios.get(
-            `${process.env.EXPO_PUBLIC_API_URL}/users/${decoded.id}`,
+            `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/${decoded.id}`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -57,15 +72,11 @@ const Dashboard = () => {
           );
           if (res.data) {
             setUSerInfo(res.data);
-            setIsNotificationEnabled(res.data.notiSettings)
+            setIsNotificationEnabled(res.data.notiSettings);
           }
-          if (res) {
-            console.log(
-              `Get user: ,${process.env.EXPO_PUBLIC_API_URL}/users/${decoded.id}`
-            );
-          }
+
           const project = await axios.get(
-            `${process.env.EXPO_PUBLIC_API_URL}/projects`,
+            `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/my-projects`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -75,20 +86,17 @@ const Dashboard = () => {
           );
           console.log(project.data);
           setListProject(project.data);
-          if (project) {
-            console.log(
-              `Get project: ,${process.env.EXPO_PUBLIC_API_URL}/projects`
-            );
-          }
         } catch (error) {
           console.log("Error fetching user data:", error);
-          ToastAndroid.show("An error occurred", ToastAndroid.SHORT);
+          await SecureStore.deleteItemAsync("token");
+          router.push("/login");
+          ToastAndroid.show("Getting user info fail", ToastAndroid.SHORT);
         }
       }
     };
 
     getUser();
-  }, [refresh]);
+  }, [refresh, isToken]);
 
   // Function to handle project deletion
   const handleDelete = async () => {
@@ -96,7 +104,7 @@ const Dashboard = () => {
       const token = await SecureStore.getItemAsync("token");
       console.log("Deleting project with ID:", projectIdToDelete);
       const res = await axios.delete(
-        `${process.env.EXPO_PUBLIC_API_URL}/projects/${projectIdToDelete}`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${projectIdToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -116,7 +124,10 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.log("Error deleting project:", error);
-      ToastAndroid.show("Error deleting project", ToastAndroid.SHORT);
+      ToastAndroid.show(
+        "Use must be admin to delete this project",
+        ToastAndroid.SHORT
+      );
     }
   };
 
@@ -129,8 +140,6 @@ const Dashboard = () => {
   const time = new Date().getHours();
   const greeting =
     time < 12 ? "Good Morning" : time < 18 ? "Good Afternoon" : "Good Evening";
-
- 
 
   return (
     <View className="flex-1 bg-[#1D2760]">
@@ -182,12 +191,10 @@ const Dashboard = () => {
           {/* Nút Notifications */}
           <TouchableOpacity
             onPress={() => router.push("/userInfo/nofitication")}
-            
             className="bg-[#313384] p-4 rounded-full border-2 border-[#cdcdcd] shadow-xl"
           >
             <Ionicons name="notifications-outline" size={24} color="white" />
           </TouchableOpacity>
-          
 
           {/* Nút Settings */}
           <TouchableOpacity

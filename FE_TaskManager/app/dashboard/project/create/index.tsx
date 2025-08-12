@@ -29,6 +29,7 @@ const CreateProject = () => {
   const [isLimitDate, setIsLimitDate] = useState(false);
   const [createby, setcreateby] = useState<string>("");
   const [memberCreate, setMemberCreate] = useState<IEditUser[]>([]);
+  const [enable, setEnable] = useState(true);
 
   const updateMemberCreateList = (membersList: IAddUser[]) => {
     const result: IEditUser[] = membersList.flatMap((item) =>
@@ -103,12 +104,16 @@ const CreateProject = () => {
   };
 
   const handleCreateProject = async () => {
+    setEnable(false);
     if (projectName === "" || description === "" || members.length === 0) {
       ToastAndroid.show("Please fill in all fields", ToastAndroid.SHORT);
+      setEnable(true);
     } else if (isLimitDate && dayjs(date).isBefore(dayjs())) {
       ToastAndroid.show("End date must be after today", ToastAndroid.SHORT);
+      setEnable(true);
     } else if (!members.some((item) => item.roleName.includes("admin"))) {
       ToastAndroid.show("At least one admin is required", ToastAndroid.SHORT);
+      setEnable(true);
     } else {
       try {
         const token = (await SecureStore.getItemAsync("token")) as string;
@@ -117,7 +122,7 @@ const CreateProject = () => {
           : dayjs("2999-12-20").toISOString();
 
         const res = await axios.post(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects`,
           {
             name: projectName,
             description: description,
@@ -138,7 +143,7 @@ const CreateProject = () => {
         }
 
         await axios.put(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${res.data.id}/members`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${res.data.id}/members`,
           {
             membersList: memberCreate,
           },
@@ -149,14 +154,16 @@ const CreateProject = () => {
             },
           }
         );
-
+        
         ToastAndroid.show("Project created successfully", ToastAndroid.SHORT);
         router.replace({
           pathname: "/dashboard",
           params: { refresh: "true" },
         });
+        
       } catch (error: any) {
         console.log("Error creating project:", error?.response?.data || error);
+        setEnable(true);
         ToastAndroid.show("Failed to create project", ToastAndroid.SHORT);
       }
     }
@@ -281,6 +288,7 @@ const CreateProject = () => {
 
           <TouchableOpacity
             onPress={handleCreateProject}
+            disabled={!enable}
             className="bg-[#2f3f96] p-4 rounded-full mt-6"
           >
             <Text className="text-white text-center font-bold text-lg">

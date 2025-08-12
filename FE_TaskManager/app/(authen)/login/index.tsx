@@ -3,7 +3,7 @@ import AuthenButton from "@/common/Button";
 import InputLabel from "@/common/InputLabel";
 import { LinearGradient } from "expo-linear-gradient";
 import { Link, router } from "expo-router";
-import React, {  useState } from "react";
+import React, {  useEffect, useState } from "react";
 import {
   Text,
   ToastAndroid,
@@ -22,33 +22,17 @@ const Index = () => {
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [message, setMessage] = useState("");
-  
-  // const [keyboardOffset, setKeyboardOffset] = useState(0);
 
-  // useEffect(() => {
-  //   // const checkToken = async () => {
-  //   //   const token = await SecureStore.getItemAsync("token"); 
-  //   //   if (token) {
-  //   //     router.replace("/dashboard"); // Redirect to dashboard if token exists
-  //   //   }
-  //   // };
-  //   // checkToken();
+  useEffect(() => {
+    const checkToken = async () => {
+      const token = await SecureStore.getItemAsync("token");
+      if (token) {
+        router.replace("/dashboard"); // Chặn người dùng đã login vào lại login
+      }
+    };
+    checkToken();
+  }, []);
 
-  //   const keyboardDidShow = Keyboard.addListener(
-  //     "keyboardDidShow",
-  //     (e: KeyboardEvent) => {
-  //       setKeyboardOffset(e.endCoordinates.height);
-  //     }
-  //   );
-  //   const keyboardDidHide = Keyboard.addListener("keyboardDidHide", () => {
-  //     setKeyboardOffset(0);
-  //   });
-
-  //   return () => {
-  //     keyboardDidShow.remove();
-  //     keyboardDidHide.remove();
-  //   };
-  // }, []);
 
   const handleSignIn = async () => {
     if (email === "" || password === "") {
@@ -56,8 +40,9 @@ const Index = () => {
       return;
     }
     try {
+      console.log('`https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/login`')
       const res = await axios.post(
-        `${process.env.EXPO_PUBLIC_API_URL}/users/login`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/users/login`,
         { email: email, password: password },
         {
           headers: { "Content-Type": "application/json" },
@@ -87,7 +72,6 @@ const Index = () => {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-         
         }}
         keyboardShouldPersistTaps="handled"
       >

@@ -1,5 +1,5 @@
 import { ITaskFull } from "@/model/ITask";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Animated,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import { router } from "expo-router";
 
@@ -26,10 +27,19 @@ const TaskItem = ({
   projectId,
 }: TaskItemProps) => {
   const pan = useRef(new Animated.ValueXY()).current;
+  const ava = task.createdBy.avatar;
+
+  // useEffect(() => {
+  //   console.log("cac",task.taskUsers.map((user) => user.user.avatar));
+  // },[])
+
+  
+
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dx) > 10,
+      onStartShouldSetPanResponder: (_, gestureState) =>
+        Math.abs(gestureState.dx) > 10,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove: Animated.event([null, { dx: pan.x }], {
         useNativeDriver: false,
@@ -73,7 +83,28 @@ const TaskItem = ({
             },
           ]}
         >
-          <Text style={styles.taskName}>{task.taskName}</Text>
+          <View className="flex-row gap-2 items-center mb-2">
+            <Text style={styles.taskName}>{task.taskName}</Text>
+            <View className="flex-row gap-1 items-center"> 
+              <Image
+              />
+              {
+                task.taskUsers.map((user) => {
+                  return (
+                    <Image
+                      key={user.id}
+                      source={
+                        user.user.avatar
+                          ? { uri: user.user.avatar }
+                          : require("../assets/images/placeholderAva.jpg")
+                      }
+                      className="w-4 h-4 rounded-full bg-white mb-2 border-2 border-[#CACCFD]"
+                    />
+                  );
+                })
+              }
+            </View>
+          </View>
 
           <View
             style={[
@@ -83,9 +114,7 @@ const TaskItem = ({
           >
             <Text
               style={
-                task.state === "Done"
-                  ? styles.doneText
-                  : styles.notDoneText
+                task.state === "Done" ? styles.doneText : styles.notDoneText
               }
             >
               {task.state}
@@ -131,8 +160,6 @@ const TaskItem = ({
           >
             <Text style={styles.actionText}>Delete</Text>
           </TouchableOpacity>
-
-        
         </View>
       </View>
     </View>
@@ -217,7 +244,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F3F4F6", // ✅ Gợi ý: gray-100
   },
-  
+
   actionBtn: {
     paddingVertical: 6,
     paddingHorizontal: 12,

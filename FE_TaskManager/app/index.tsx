@@ -3,9 +3,23 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import AuthenButton from "@/common/Button";
 import { useEffect } from "react";
+import * as SecureStore from "expo-secure-store";
 
 export default function Index() {
   // const width =  useSharedValue(100)
+  
+    useEffect(() => {
+      const checkToken = async () => {
+        const token = await SecureStore.getItemAsync("token");
+        console.log(token);
+        if (token) {
+          router.replace("/dashboard"); // Chặn người dùng đã login vào lại login
+        }
+      };
+      checkToken();
+    }, []);
+  
+  
   const handleSignIn = () => {
     router.push("/login");
     // width.value = width.value + 100

@@ -22,7 +22,6 @@ const priority = ["Medium", "Important", "Warning"];
 const EditTask = () => {
   const { id } = useLocalSearchParams() as { id: string };
   const { project } = useLocalSearchParams() as { project: string };
-
   const [taskName, setTaskName] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(
     dayjs().format("YYYY-MM-DD")
@@ -33,6 +32,7 @@ const EditTask = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [prioritySelect, setPrioritySelect] = useState("");
   const [description, setDescription] = useState<string>("");
+  const [createBy,setcreateby] = useState<string>("")
 
   useEffect(() => {
     console.log("project id:", project);
@@ -45,7 +45,7 @@ const EditTask = () => {
       const token = (await SecureStore.getItemAsync("token")) as string;
       try {
         const res = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks/${id}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -54,10 +54,14 @@ const EditTask = () => {
           }
         );
         if (res) {
+          console.log("caccc", res.data.createdBy.email);
+          setcreateby(res.data.createdBy.email);              
           setTaskName(res.data.taskName);
           setStartDate(res.data.createdTime);
           setEndDate(res.data.deadline);
           setPrioritySelect(res.data.priority);
+          console.log("Task details:", res.data);
+          console.log("Task members:", res.data.taskUsers);
           setMemberTask(
             res.data.taskUsers.map(
               (item: { user: { email: string } }) => item.user.email
@@ -70,7 +74,7 @@ const EditTask = () => {
           setMemberTask(emails);
         }
         const emails = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/members`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/members`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -84,6 +88,10 @@ const EditTask = () => {
         setProjectMembers(email);
       } catch (error) {
         console.error("Error fetching task data:", error);
+        ToastAndroid.show(
+          "Error fetching task data, please try again later",
+          ToastAndroid.SHORT
+        );
       }
     };
     taskDetail();
@@ -95,6 +103,7 @@ const EditTask = () => {
     } else {
       setMemberTask([...memberTask, member]);
     }
+    console.log("Selected members:", memberTask);
   };
 
   const handleSubmit = async () => {
@@ -108,12 +117,17 @@ const EditTask = () => {
       endDate === ""
     ) {
       ToastAndroid.show("Please fill all fields", ToastAndroid.SHORT);
-    } else {
+    }
+    else if(!memberTask.includes(createBy)){
+     ToastAndroid.show("you are not allowed to delete createBy from task ", ToastAndroid.SHORT);
+      return
+    }
+    else {
       // Handle task update logic here
 
       try {
         const member = await axios.put(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}/assign`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks/${id}/assign`,
           {
             emails: memberTask,
           },
@@ -126,7 +140,7 @@ const EditTask = () => {
         );
 
         const res = await axios.put(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks/${id}`,
           {
             description: description,
             deadline: dayjs(endDate).toISOString(),
@@ -154,9 +168,10 @@ const EditTask = () => {
           });
         }
       } catch (error) {
-        console.error(
-          "Error updating task:",
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`
+        console.error("Error updating task:", error);
+        ToastAndroid.show(
+          "Error updating task, please try again later",
+          ToastAndroid.SHORT
         );
       }
     }

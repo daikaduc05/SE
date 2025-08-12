@@ -43,16 +43,14 @@ const ProjectDetail = () => {
   const [originalTasks, setOriginalTasks] = useState<ITaskFull[]>([]); // Lưu trữ danh sách công việc gốc
   const [isvisible, setIsVisible] = useState(false); // Trạng thái hiển thị modal
   const [taskId, setTaskId] = useState<string | null>(null); // ID công việc được chọn
+  const [ownerFilter, setOwnerFilter] = useState("My Task"); // Trạng thái lọc công việc theo người dùng
+  const [myTask, setMyTask] = useState<ITaskFull[]>([]); // Danh sách công việc của người dùng
   const { refresh } = useLocalSearchParams();
 
   const handleDelete = async (id: string) => {
     try {
-      console.log(
-        "del api",
-        `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`
-      );
       const res = await axios.delete(
-        `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${id}`,
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks/${id}`,
         {
           headers: {
             Authorization: `Bearer ${await SecureStore.getItemAsync("token")}`,
@@ -66,8 +64,11 @@ const ProjectDetail = () => {
         setOriginalTasks((prev) => prev.filter((t) => t.id !== id));
       }
     } catch (error) {
-      ToastAndroid.show("Try again!", ToastAndroid.SHORT);
       console.log("Error deleting task:", error);
+      ToastAndroid.show(
+        "You must be a member of this task to delete it.",
+        ToastAndroid.SHORT
+      );
     }
   };
 
@@ -75,7 +76,7 @@ const ProjectDetail = () => {
     const fetching = async () => {
       try {
         const getProject = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}`,
           {
             headers: {
               Authorization: `Bearer ${await SecureStore.getItemAsync(
@@ -86,8 +87,9 @@ const ProjectDetail = () => {
           }
         );
         setProjectInfo(getProject.data);
+
         const response = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks`,
           {
             headers: {
               Authorization: `Bearer ${await SecureStore.getItemAsync(
@@ -97,6 +99,22 @@ const ProjectDetail = () => {
             },
           }
         );
+        console.log("response", response.data[0]);
+        const mytask = await axios.get(
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/my-tasks`,
+          {
+            headers: {
+              Authorization: `Bearer ${await SecureStore.getItemAsync(
+                "token"
+              )}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        setMyTask(mytask.data);
+        console.log("mytask", mytask.data[0]);
+        
+
         setOriginalTasks(response.data);
       } catch (error) {
         console.log("Error fetching project data:", error);
@@ -118,13 +136,25 @@ const ProjectDetail = () => {
           : task
       )
     );
+    setMyTask((prevTasks) =>
+      prevTasks.map((task) =>
+        task.id === taskId
+          ? {
+              ...task,
+              state:
+                task.state === EFilter.Done ? EFilter.NotDone : EFilter.Done,
+            }
+          : task
+      )
+    );
+    console.log(taskId);
     try {
       const task = originalTasks.find((t) => t.id === taskId);
       const newState =
         task?.state === EFilter.Done ? EFilter.NotDone : EFilter.Done;
 
-      await axios.put(
-        `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${taskId}`,
+      const res = await axios.put(
+        `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks/${taskId}`,
         {
           state: newState,
         },
@@ -135,29 +165,27 @@ const ProjectDetail = () => {
           },
         }
       );
+      if (res) {
+        ToastAndroid.show("Update success", ToastAndroid.SHORT);
+      }
     } catch (error) {
       // Nếu lỗi, revert lại thay đổi
       ToastAndroid.show(
-        "Cập nhật thất bại, vui lòng thử lại.",
+        "You must be a member of this task to update it.",
         ToastAndroid.SHORT
       );
-      setOriginalTasks((prevTasks) =>
-        prevTasks.map((task) =>
-          task.id === taskId
-            ? {
-                ...task,
-                state:
-                  task.state === EFilter.Done ? EFilter.NotDone : EFilter.Done,
-              }
-            : task
-        )
-      );
+
       console.log("Error updating task status:", error);
     }
   };
 
   useEffect(() => {
     let filtered = originalTasks;
+    // console.log("originalTasks", originalTasks[0].taskUsers);
+
+    if (ownerFilter === "My Task") {
+      filtered = myTask;
+    }
 
     if (filter !== EFilter.All) {
       filtered = filtered.filter((t) => t.state === filter);
@@ -173,7 +201,7 @@ const ProjectDetail = () => {
     }
 
     setTasks(filtered);
-  }, [filter, date, originalTasks]);
+  }, [filter, date, originalTasks, ownerFilter]);
 
   const handleToday = () => {
     setType(EType.Today);
@@ -295,7 +323,7 @@ const ProjectDetail = () => {
             >
               <Text className="text-white font-medium">{tasks.length}</Text>
               <Text className="text-gray-300">All day</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> 
           </View>
 
           {/* Line */}
@@ -333,24 +361,58 @@ const ProjectDetail = () => {
         </View>
 
         {/* Filter buttons */}
-        <View className="flex-row gap-4 mb-6 justify-end">
-          {[EFilter.Done, EFilter.NotDone, EFilter.All].map((f) => (
-            <TouchableOpacity
-              key={f}
-              onPress={() => setFilter(f)}
-              className={`px-4 py-2  rounded-full ${
-                filter === f
-                  ? f === EFilter.Done
-                    ? "bg-green-500"
-                    : f === EFilter.NotDone
-                    ? "bg-red-500"
-                    : "bg-blue-500"
-                  : "bg-transparent"
-              }`}
-            >
-              <Text className="text-white">{f}</Text>
-            </TouchableOpacity>
-          ))}
+        <View className="mb-4 flex-col items-start mt-2 gap-4">
+          {/* Filter: My Task / Shared Task */}
+          <View className="flex-row gap-2 ">
+            {["My Task", "All Task"].map((type) => (
+              <TouchableOpacity
+                key={type}
+                onPress={() => setOwnerFilter(type)}
+                className={`px-4 py-2 rounded-full ${
+                  ownerFilter === type
+                    ? type === "My Task"
+                      ? "bg-purple-500"
+                      : "bg-yellow-500"
+                    : "bg-gray-300"
+                }`}
+              >
+                <Text
+                  className={`${
+                    ownerFilter === type ? "text-white" : "text-black"
+                  } font-semibold`}
+                >
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View className="flex-row gap-2 mb-4">
+            {[EFilter.Done, EFilter.NotDone, EFilter.All].map((f) => (
+              <TouchableOpacity
+                key={f}
+                onPress={() => setFilter(f)}
+                className={`px-4 py-2 rounded-full ${
+                  filter === f
+                    ? f === EFilter.Done
+                      ? "bg-green-500"
+                      : f === EFilter.NotDone
+                      ? "bg-red-500"
+                      : "bg-blue-500"
+                    : "bg-gray-300"
+                }`}
+              >
+                <Text
+                  className={`${
+                    filter === f ? "text-white" : "text-black"
+                  } font-semibold`}
+                >
+                  {f}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Filter: Done / Not Done / All */}
         </View>
 
         {/* Calendar */}

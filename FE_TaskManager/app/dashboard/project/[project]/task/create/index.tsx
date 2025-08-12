@@ -28,8 +28,9 @@ const CreateTask = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [prioritySelect, setPrioritySelect] = useState("");
   const [description, setDescription] = useState<string>("");
+  const [enabled, setEnabled] = useState(true);
+  const { project } = useLocalSearchParams() as { project: string };
 
-;
   const handleSelectMember = (member: string) => {
     if (memberTask.includes(member)) {
       setMemberTask(memberTask.filter((item) => item !== member));
@@ -37,7 +38,6 @@ const CreateTask = () => {
       setMemberTask([...memberTask, member]);
     }
   };
-  const { project } = useLocalSearchParams() as { project: string };
   useEffect(() => {
     console.log("Selected members:", memberTask);
   },[memberTask])
@@ -47,7 +47,7 @@ const CreateTask = () => {
     const fetchMembers = async () => {
       try {
         const res = await axios.get(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/members`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/members`,
           {
             headers: {
               Authorization: `Bearer ${await SecureStore.getItemAsync(
@@ -68,6 +68,7 @@ const CreateTask = () => {
     fetchMembers();
   }, []);
   const handleSubmit = async () => {
+    setEnabled(false);
     if (
       taskName === "" ||
       description === "" ||
@@ -77,11 +78,12 @@ const CreateTask = () => {
       endDate === ""
     ) {
       ToastAndroid.show("Please fill all field", ToastAndroid.SHORT);
+      setEnabled(true);
     } else {
       // Handle task creation logic here
       try {
         const res = await axios.post(
-          `${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks`,
+          `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks`,
           {
             description: description,
             taskState: taskName,
@@ -100,7 +102,7 @@ const CreateTask = () => {
           }
         );
         console.log("Task created id:", res.data.id);
-        const member = await axios.put(`${process.env.EXPO_PUBLIC_API_URL}/projects/${project}/tasks/${res.data.id}/assign`, {
+        const member = await axios.put(`https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/projects/${project}/tasks/${res.data.id}/assign`, {
           emails:memberTask
         }, {
           headers: {
@@ -120,6 +122,8 @@ const CreateTask = () => {
         }
       } catch (error) {
         console.log("Error creating task:", error);
+        ToastAndroid.show("Error creating task", ToastAndroid.SHORT);
+        setEnabled(true);
       }
     }
   };
@@ -310,6 +314,7 @@ const CreateTask = () => {
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => handleSubmit()}
+            disabled={!enabled}
             className="bg-[#8D8CC3] py-3 px-4 rounded-full mt-6"
           >
             <Text className="text-white text-center font-bold text-lg">

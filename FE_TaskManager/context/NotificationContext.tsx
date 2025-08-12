@@ -143,7 +143,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
         if (!isMounted) return;
 
-        const socket = io(String(process.env.EXPO_PUBLIC_API_URL), {
+        const socket = io("https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net", {
           transports: ["websocket"],
           query: { userId },
         });
@@ -225,7 +225,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       else {
         try {
           const response = axios.post(
-            `${process.env.EXPO_PUBLIC_API_URL}/api/v1/notifications/push-token`,
+            `https://planify-fvgwghb4dzgna2er.southeastasia-01.azurewebsites.net/api/v1/notifications/push-token`,
             {
               token: expoPushToken,
             },
