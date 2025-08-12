@@ -22,7 +22,7 @@ export class ProjectsController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Post('/')
+  @Post()
   async createProject(@Body() project: CreateProjectDto, @Request() req: CustomRequest) {
     this.logger.log('[Start Controller] createProject');
     return await this.projectsService.createProject(project, req.userId);
@@ -43,7 +43,7 @@ export class ProjectsController {
     return await this.projectsService.updateUserProject(projectId, body.membersList, req.userId);
   }
 
-  @Roles(RoleEnum.Admin, RoleEnum.User)
+  @Roles(RoleEnum.User)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Post('/:projectId/tasks/')
@@ -56,13 +56,13 @@ export class ProjectsController {
     return await this.projectsService.createTask(task, req.userId, projectId);
   }
 
-  @Roles(RoleEnum.Admin, RoleEnum.User)
+  @Roles(RoleEnum.User)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Get('/:projectId/tasks/:taskId/')
-  async getTask(@Param('projectId') projectId: number, @Param('taskId') taskId: number) {
-    this.logger.log('[Start Controller] getTask');
-    return await this.projectsService.findOneTask(taskId);
+  @Get('/:projectId/my-tasks')
+  async getMyTask(@Param('projectId') projectId: number, @Request() req: CustomRequest) {
+    this.logger.log('[Start Controller] getMyTask');
+    return await this.projectsService.findMyTask(projectId, req.userId);
   }
 
   @Roles(RoleEnum.Admin)
@@ -80,7 +80,7 @@ export class ProjectsController {
     return await this.projectsService.assignTask(taskId, body.emails, req.userId);
   }
 
-  @Roles(RoleEnum.User, RoleEnum.Admin)
+  @Roles(RoleEnum.User)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Get('/:projectId/members/')
@@ -102,7 +102,7 @@ export class ProjectsController {
     return await this.projectsService.updateProject(projectId, updateData, req.userId);
   }
 
-  @Roles(RoleEnum.Admin, RoleEnum.User)
+  @Roles(RoleEnum.Admin)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Put('/:projectId/tasks/:taskId/')
@@ -113,12 +113,14 @@ export class ProjectsController {
     @Request() req: CustomRequest,
   ) {
     this.logger.log('[Start Controller] updateTask');
+    this.logger.log(updateData);
+    this.logger.log(req.userId);
     return await this.projectsService.updateTask(taskId, updateData, req.userId);
   }
 
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
-  @Get('/')
+  @Get('/my-projects')
   async findProjectByUserId(@Request() req: CustomRequest) {
     this.logger.log('[Start Controller] findProjectByUserId');
     return await this.projectsService.findProjectByUserId(req.userId);
@@ -133,7 +135,7 @@ export class ProjectsController {
     return await this.projectsService.findOneProject(projectId);
   }
 
-  @Roles(RoleEnum.User, RoleEnum.Admin)
+  @Roles(RoleEnum.User)
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Get('/:projectId/tasks')
@@ -146,9 +148,11 @@ export class ProjectsController {
   @ApiBearerAuth('access-token')
   @UseGuards(AuthenticateGuard)
   @Delete('/:projectId/tasks/:taskId')
-  async deleteTask(@Param('taskId') taskId: number, @Param('projectId') projectId: number) {
+  async deleteTask(
+    @Param('taskId') taskId: number,
+    @Param('projectId') __projectId: number, // eslint-disable-line @typescript-eslint/no-unused-vars
+  ) {
     this.logger.log('[Start Controller] deleteTask');
-    console.log(taskId, projectId);
     await this.projectsService.deleteTask(taskId);
     return { message: 'Task deleted successfully' };
   }
@@ -161,5 +165,14 @@ export class ProjectsController {
     this.logger.log('[Start Controller] deleteProject');
     await this.projectsService.deleteProject(projectId);
     return { message: 'Project deleted successfully' };
+  }
+
+  @Roles(RoleEnum.User)
+  @ApiBearerAuth('access-token')
+  @UseGuards(AuthenticateGuard)
+  @Get('/:projectId/tasks/:taskId')
+  async getTaskDetail(@Param('taskId') taskId: number, @Param('projectId') projectId: number) {
+    this.logger.log('[Start Controller] getTaskDetail');
+    return await this.projectsService.findOneTask(taskId, projectId);
   }
 }
